@@ -1,0 +1,10 @@
+{% for g in groups %}
+  <p class="px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wide text-muted">{{ g.title }}</p>
+  {% for pk, title, sub in g.items %}
+    <a href="{% url g.url_name pk %}" class="block rounded-control px-3 py-2 text-sm hover:bg-ink-100 dark:hover:bg-ink-800">
+      <span class="font-medium">{{ title }}</span>{% if sub %}<span class="block text-xs text-muted">{{ sub }}</span>{% endif %}
+    </a>
+  {% endfor %}
+{% empty %}
+  <p class="px-3 py-3 text-sm text-muted">{% if q|length < 2 %}Type at least two letters.{% else %}Nothing found for “{{ q }}”.{% endif %}</p>
+{% endfor %}

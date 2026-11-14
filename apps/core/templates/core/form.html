@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{# The page for every simple create/edit form (customers, vehicles, parts, suppliers, staff, branch: apps.core.http.form_page). #}
+{# Widgets are Django's own, given the kit's control look by apps.core.forms.Styled. #}
+<div class="mx-auto max-w-2xl">
+  <c-page-header title="{{ title }}" back_url="{{ cancel_url }}" back_label="Back" />
+  <form method="post" {% if form.is_multipart %}hx-encoding="multipart/form-data"{% endif %}>
+    {% csrf_token %}
+    <c-ui.card class="grid gap-4">
+      <div id="form-errors" class="text-sm empty:hidden" role="alert">{% if form.non_field_errors %}{% include "core/partials/errors.html" with errors=form.non_field_errors %}{% endif %}</div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% for field in form.visible_fields %}
+          {% if field.widget_type == "checkbox" %}
+            <div class="sm:col-span-2">
+              <label class="flex items-center gap-2 text-sm font-medium" for="{{ field.id_for_label }}">{{ field }} {{ field.label }}</label>
+              {% if field.help_text %}<c-ui.description>{{ field.help_text }}</c-ui.description>{% endif %}
+              {% for e in field.errors %}<c-ui.error message="{{ e }}" />{% endfor %}
+            </div>
+          {% else %}
+            <div class="{% if field.widget_type == 'textarea' or field.name == 'address' or field.name == 'notes' %}sm:col-span-2{% endif %}">
+              <c-ui.label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-red-600" aria-hidden="true">*</span>{% endif %}</c-ui.label>
+              {{ field }}
+              {% if field.help_text %}<p class="mt-1 text-xs text-muted">{{ field.help_text }}</p>{% endif %}
+              {% for e in field.errors %}<c-ui.error message="{{ e }}" />{% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+      <div class="flex justify-end gap-2">
+        {% if cancel_url %}<c-ui.button href="{{ cancel_url }}">Cancel</c-ui.button>{% endif %}
+        <c-ui.button type="submit" variant="primary">{{ submit }}</c-ui.button>
+      </div>
+    </c-ui.card>
+  </form>
+</div>
+{% endblock %}

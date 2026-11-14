@@ -1,0 +1,34 @@
+{
+  "name": "dakdot-static",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "cd .. && uv run python manage.py cotton_ui_sources -o static/src/cotton-ui.sources.css",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/alpinejs": "^3.13.11",
+    "@types/alpinejs__anchor": "^3.13.1",
+    "@types/alpinejs__collapse": "^3.13.4",
+    "@types/alpinejs__focus": "^3.13.4",
+    "@types/alpinejs__mask": "^3.13.4",
+    "prettier": "^3.9.10",
+    "prettier-plugin-jinja-template": "^2.2.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.1"
+  },
+  "dependencies": {
+    "@alpinejs/anchor": "^3.16.0",
+    "@alpinejs/collapse": "^3.16.0",
+    "@alpinejs/focus": "^3.16.0",
+    "@alpinejs/mask": "^3.16.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "alpinejs": "^3.16.0",
+    "htmx-ext-response-targets": "^2.0.4",
+    "htmx.org": "^2.0.10",
+    "tailwindcss": "^4.3.3"
+  }
+}

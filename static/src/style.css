@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@source "../../";
+
+/* Kit tokens + class list (generated, see theme.css), then the Dakdot brand on top. */
+@import "./cotton-ui.sources.css";
+@import "./theme.css";
+
+.htmx-indicator {
+	display: none;
+}
+.htmx-request .htmx-indicator {
+	display: grid;
+}
+.htmx-request.htmx-indicator {
+	display: grid;
+}
+
+[x-cloak] {
+	display: none;
+}
+
+/* App-specific styles the kit has no component for. Everything else is a django-cotton-ui component
+   (<c-ui.*>) or an app component in templates/cotton/ (<c-status>, <c-section>, <c-page-header>...). */
+@layer components {
+}

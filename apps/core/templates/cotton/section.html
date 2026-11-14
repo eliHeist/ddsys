@@ -1,0 +1,23 @@
+{% comment %}
+A card with a title bar: the standard block on detail pages (Work and quotes, Tasks, Invoices...).
+    <c-section title="Invoices" count="{{ invoices|length }}">
+        <c-slot name="actions"><c-ui.button size="sm" href="...">New invoice</c-ui.button></c-slot>
+        ... rows, flush to the edges ...
+    </c-section>
+`padded` adds body padding for loose content; leave it off for tables and row lists.
+Same surface as <c-ui.card> (rounded-box, surface fill, box border), with the app's tighter header.
+{% endcomment %}
+<c-vars title="" subtitle="" count="" :padded="False" class="" />
+
+<section {{ attrs }} class="rounded-box border border-[color:var(--color-card-border,var(--color-box-border))] bg-[var(--color-surface)] shadow-[var(--shadow-box)] {{ class }}">
+    {% if title or actions %}
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-box-border px-4 py-3">
+            <div class="min-w-0">
+                <h2 class="text-lg font-semibold text-ink-900 dark:text-ink-100">{{ title }}{% if count != "" %} <span class="text-sm font-normal text-muted">{{ count }}</span>{% endif %}</h2>
+                {% if subtitle %}<p class="text-sm text-muted">{{ subtitle }}</p>{% endif %}
+            </div>
+            {% if actions %}<div class="flex flex-wrap items-center gap-2">{{ actions }}</div>{% endif %}
+        </div>
+    {% endif %}
+    <div class="{% if padded %}p-4 md:p-5{% endif %}">{{ slot }}</div>
+</section>

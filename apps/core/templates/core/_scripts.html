@@ -1,0 +1,46 @@
+<script>
+  window.CSRF = "{{ csrf_token }}";
+  document.addEventListener('alpine:init', () => {
+    // cfg: { title, message, url, submit, danger, target, swap, fields: [{name, label, type, value, required, options}] }
+    Alpine.data('actionDialog', () => ({
+      open: false, busy: false, cfg: { fields: [] },
+      show(cfg) { this.cfg = { fields: [], target: 'body', swap: 'none', ...cfg }; this.open = true; },
+      close() { this.open = false; this.busy = false; },
+      async submit(form) {
+        this.busy = true;
+        const box = document.getElementById('dialog-errors'); if (box) box.textContent = '';
+        const values = Object.fromEntries(new FormData(form));
+        for (const k in values) if (typeof values[k] === 'string') values[k] = values[k];
+        await window.htmx.ajax('POST', this.cfg.url, { target: this.cfg.target, swap: this.cfg.swap, values, headers: { 'X-CSRFToken': window.CSRF } });
+        this.busy = false;
+        if (!box || !box.textContent.trim()) this.close();
+      },
+    }));
+
+    // Quotation and invoice line editor (billing/partials/_line_editor.html). Rows post as repeated
+    // description, note, quantity, unit_price and lump_sum fields; billing.forms.parse_lines reads them back.
+    Alpine.data('lineEditor', (initial) => ({
+      rows: (initial && initial.length) ? initial : [{ description: '', note: '', quantity: '1', unit_price: '', lump_sum: false }],
+      add() { this.rows.push({ description: '', note: '', quantity: '1', unit_price: '', lump_sum: false }); },
+      remove(i) { this.rows.splice(i, 1); if (!this.rows.length) this.add(); },
+      move(i, by) { const j = i + by; if (j < 0 || j >= this.rows.length) return; const [r] = this.rows.splice(i, 1); this.rows.splice(j, 0, r); },
+      num(v) { return parseFloat(String(v || '0').replace(/,/g, '')) || 0; },
+      amount(r) { return r.lump_sum ? this.num(r.unit_price) : this.num(r.quantity) * this.num(r.unit_price); },
+      get total() { return this.rows.reduce((t, r) => t + this.amount(r), 0); },
+      fmt(n) { return Math.round(n).toLocaleString('en-US'); },
+    }));
+  });
+
+  // Error fragments come back as 422: swap them in instead of discarding them.
+  document.addEventListener('htmx:beforeSwap', (e) => {
+    if (e.detail.xhr.status === 422) {
+      const dlg = document.getElementById('dialog-errors');
+      if (dlg && dlg.offsetParent) e.detail.target = dlg;
+      e.detail.shouldSwap = true;
+      e.detail.isError = false;
+    }
+  });
+  document.addEventListener('htmx:responseError', (e) => {
+    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Something went wrong (' + e.detail.xhr.status + '). Try again.', variant: 'error' } }));
+  });
+</script>

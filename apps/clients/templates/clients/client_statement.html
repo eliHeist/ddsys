@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Statement · {{ client.name }}{% endblock %}
+{% block content %}
+<c-page-header title="Statement" back_url="{% url 'clients:detail' client.pk %}" back_label="{{ client.name }}"
+  subtitle="Everything billed to and paid by {{ client.name }}.">
+  <c-ui.button href="{% url 'documents:pdf' 'statement' client.pk %}" target="_blank" hx-boost="false">{% icon "download" %} PDF</c-ui.button>
+</c-page-header>
+<c-section>
+  {% if statement %}
+    <c-ui.table>
+      <thead><tr><th>Date</th><th>Reference</th><th>Details</th><th class="text-right">Billed</th><th class="text-right">Paid</th><th class="text-right">Balance</th></tr></thead>
+      <tbody>
+        {% for r in statement %}
+          <tr>
+            <td>{{ r.date|date:"d/m/Y" }}</td>
+            <td><a class="underline" href="{% url r.url_name r.pk %}">{{ r.ref }}</a></td>
+            <td>{{ r.what }}</td>
+            <td class="text-right tabular-nums">{% if r.debit %}{{ r.debit|number }}{% endif %}</td>
+            <td class="text-right tabular-nums">{% if r.credit %}{{ r.credit|number }}{% endif %}</td>
+            <td class="text-right tabular-nums">{{ r.balance|number }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr class="font-semibold"><td colspan="5" class="text-right">Balance due</td><td class="text-right tabular-nums">{{ balance|money }}</td></tr></tfoot>
+    </c-ui.table>
+  {% else %}
+    {% include "core/_ui.html#empty" with message="Nothing billed yet." %}
+  {% endif %}
+</c-section>
+{% endblock %}

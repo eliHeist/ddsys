@@ -1,0 +1,22 @@
+{% load ui %}
+<div id="transaction-rows">
+  {% if page_obj.object_list %}
+    <c-ui.table>
+      <thead><tr><th>Date</th><th>Account</th><th>Details</th><th class="text-right">In</th><th class="text-right">Out</th></tr></thead>
+      <tbody>
+        {% for t in page_obj %}
+          <tr class="{% if t.is_void %}text-muted line-through{% endif %}">
+            <td>{{ t.date|date:"d/m/Y" }}</td>
+            <td><a class="underline" href="{% url 'finance:account' t.account_id %}">{{ t.account }}</a></td>
+            <td>{% include "finance/partials/_transaction_link.html" %}</td>
+            <td class="text-right tabular-nums">{% if t.direction == "in" %}{{ t.amount|number }}{% endif %}</td>
+            <td class="text-right tabular-nums">{% if t.direction == "out" %}{{ t.amount|number }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </c-ui.table>
+    {% include "core/_ui.html#pager" %}
+  {% else %}
+    {% include "core/_ui.html#empty" with message="No transactions match." %}
+  {% endif %}
+</div>

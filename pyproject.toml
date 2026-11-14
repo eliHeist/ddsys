@@ -1,0 +1,22 @@
+[project]
+name = "dakdot"
+version = "0.1.0"
+description = "Dakdot Creations internal system: clients, projects, quotations, invoices, receipts and money movements"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "django>=6.0.7",
+    "django-allauth[mfa]>=65.18.0",
+    "django-cotton-ui>=0.3.2",
+    "django-debug-toolbar>=7.0.0",
+    "django-environ>=0.14.0",
+    "django-extensions>=4.1",
+    "django-htmx>=1.28.0",
+    "django-simple-history>=3.10.1",
+    "djangosetupheist>=0.6.3",
+    "fpdf2>=2.8.7",
+    "num2words>=0.5.14",
+    "psycopg2-binary>=2.9.13",
+    "uvicorn>=0.54.0",
+    "whitenoise>=6.12.0",
+]

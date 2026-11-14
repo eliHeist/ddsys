@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<c-page-header title="Hello{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}" subtitle="{{ today|date:'l j F Y' }}" />
+<div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  {% include "core/_ui.html#stat" with label="Owed to Dakdot" value=outstanding|money %}
+  {% if month %}
+    {% include "core/_ui.html#stat" with label="Money in this month" value=month.in|money %}
+    {% include "core/_ui.html#stat" with label="Money out this month" value=month.out|money %}
+    {% include "core/_ui.html#stat" with label="Net this month" value=month.net|money %}
+  {% endif %}
+</div>
+<div class="grid gap-4 lg:grid-cols-2">
+  <c-section title="Overdue invoices" count="{{ overdue|length }}">
+    {% include "reports/partials/_invoice_mini.html" with invoices=overdue empty="Nothing overdue." %}
+  </c-section>
+  {% if accounts %}
+    <c-section title="Accounts">
+      <c-slot name="actions"><c-ui.button size="sm" variant="ghost" href="{% url 'finance:accounts' %}">All</c-ui.button></c-slot>
+      <ul class="divide-y divide-box-border">
+        {% for a in accounts %}
+          <li class="flex items-center justify-between px-4 py-2.5 text-sm"><a class="underline" href="{% url 'finance:account' a.pk %}">{{ a.name }}</a><span class="font-semibold tabular-nums">{{ a.balance|money }}</span></li>
+        {% endfor %}
+      </ul>
+    </c-section>
+  {% endif %}
+  <c-section title="Quotations waiting for an answer" count="{{ waiting_quotations|length }}">
+    {% include "clients/partials/_document_list.html" with docs=waiting_quotations url_name="billing:quotation" domain="quote" empty="None waiting." %}
+  </c-section>
+  <c-section title="Active projects" count="{{ projects|length }}">
+    {% include "projects/partials/_project_list.html" with projects=projects %}
+  </c-section>
+  {% if drafts %}
+    <c-section title="Draft invoices" count="{{ drafts|length }}">
+      {% include "clients/partials/_document_list.html" with docs=drafts url_name="billing:invoice" empty="" %}
+    </c-section>
+  {% endif %}
+  {% if receipts is not None %}
+    <c-section title="Latest payments">
+      {% include "billing/partials/_receipt_table.html" with receipts=receipts %}
+    </c-section>
+    <c-section title="Latest expenses">
+      {% include "finance/partials/_expense_table.html" with expenses=expenses hide_project=True %}
+    </c-section>
+  {% endif %}
+</div>
+{% endblock %}

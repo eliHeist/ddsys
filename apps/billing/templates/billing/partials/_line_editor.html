@@ -1,0 +1,40 @@
+{% load ui %}
+{# Rows of a quotation or invoice. Alpine keeps them (lineEditor in core/_scripts.html); they post as repeated #}
+{# description / note / quantity / unit_price / lump_sum fields, read back by billing.forms.parse_lines. #}
+<div x-data='lineEditor({{ rows|jsattr }})' class="grid gap-3">
+  <div class="hidden grid-cols-[minmax(0,1fr)_6rem_8rem_8rem_5.5rem] gap-2 px-1 text-xs font-medium text-muted md:grid">
+    <span>Description</span><span class="text-right">Qty</span><span class="text-right">Price</span><span class="text-right">Amount</span><span></span>
+  </div>
+  <template x-for="(row, i) in rows" :key="i">
+    <div class="grid gap-2 rounded-control border border-box-border p-2 md:grid-cols-[minmax(0,1fr)_6rem_8rem_8rem_5.5rem] md:border-0 md:p-0">
+      <div class="grid gap-1">
+        <input name="description" x-model="row.description" required placeholder="What is it? e.g. Pull-up banners" aria-label="Description"
+          class="block w-full rounded-control border border-ink-300 bg-[var(--color-input-bg)] px-3 py-1.5 text-sm focus-ring dark:border-ink-700">
+        <input name="note" x-model="row.note" placeholder="Note (optional), e.g. A3-A4" aria-label="Note"
+          class="block w-full rounded-control border border-ink-200 bg-transparent px-3 py-1 text-xs text-muted focus-ring dark:border-ink-800">
+        <label class="flex items-center gap-2 text-xs text-muted">
+          <input type="checkbox" x-model="row.lump_sum" class="size-3.5 accent-[var(--color-accent)]"> Fixed amount (no qty / price on the document)
+        </label>
+        <input type="hidden" name="lump_sum" :value="row.lump_sum ? '1' : '0'">
+      </div>
+      <input name="quantity" x-model="row.quantity" inputmode="decimal" aria-label="Quantity" :disabled="row.lump_sum"
+        :class="row.lump_sum && 'opacity-40'" placeholder="1"
+        class="block h-9 w-full rounded-control border border-ink-300 bg-[var(--color-input-bg)] px-3 text-right text-sm tabular-nums focus-ring dark:border-ink-700">
+      <input name="unit_price" x-model="row.unit_price" x-mask:dynamic="$money($input, '.', ',', 0)" inputmode="numeric"
+        :aria-label="row.lump_sum ? 'Amount' : 'Price'" :placeholder="row.lump_sum ? 'Amount' : 'Price'"
+        class="block h-9 w-full rounded-control border border-ink-300 bg-[var(--color-input-bg)] px-3 text-right text-sm tabular-nums focus-ring dark:border-ink-700">
+      <p class="flex h-9 items-center justify-end text-sm font-medium tabular-nums" x-text="fmt(amount(row))"></p>
+      <div class="flex h-9 items-center justify-end gap-0.5">
+        <button type="button" class="rounded-control p-1.5 text-muted hover:bg-ink-100 dark:hover:bg-ink-800" @click="move(i, -1)" aria-label="Move up">↑</button>
+        <button type="button" class="rounded-control p-1.5 text-muted hover:bg-ink-100 dark:hover:bg-ink-800" @click="move(i, 1)" aria-label="Move down">↓</button>
+        <button type="button" class="rounded-control p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" @click="remove(i)" aria-label="Remove line">{% icon "trash" %}</button>
+      </div>
+      {# a disabled quantity is not posted, so keep the row's fields lined up #}
+      <template x-if="row.lump_sum"><input type="hidden" name="quantity" value="1"></template>
+    </div>
+  </template>
+  <div class="flex flex-wrap items-center justify-between gap-2 border-t border-box-border pt-3">
+    <c-ui.button size="sm" @click="add()">{% icon "plus" %} Add line</c-ui.button>
+    <p class="text-lg font-semibold">Total <span class="tabular-nums" x-text="'UGX ' + fmt(total)"></span></p>
+  </div>
+</div>

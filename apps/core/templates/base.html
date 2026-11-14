@@ -1,0 +1,94 @@
+{% load static ui %}
+
+<c-layout.base>
+	<c-slot name="title">{% block title %}{% endblock %}</c-slot>
+	<a
+		href="#main"
+		class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[100] focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">Skip to content</a>
+	<div class="flex min-h-screen">
+		<aside class="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-box-border bg-surface md:flex">
+			{% include "core/_nav.html" %}
+		</aside>
+
+		<div class="flex min-w-0 flex-1 flex-col">
+			<header class="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-box-border bg-surface/90 px-3 backdrop-blur md:px-5">
+				{# mobile: the same navigation in a drawer #}
+				<div class="md:hidden">
+					<c-ui.drawer side="left" size="sm" title="{{ BRAND }}">
+						<c-ui.button variant="ghost" size="icon" @click="drawerOpen = true" aria-label="Open menu">{% icon "menu" "size-5" %}</c-ui.button>
+						<c-slot name="content">{% include "core/_nav.html" with in_drawer=True %}</c-slot>
+					</c-ui.drawer>
+				</div>
+
+				{# search: results come from reports:search into the panel under the box; "/" focuses it #}
+				<div class="relative max-w-xl flex-1"
+					x-data="{ open: false }"
+					@click.outside="open = false"
+					@keydown.escape.window="open = false">
+					<c-ui.input
+						type="search"
+						name="q"
+						x-ref="q"
+						autocomplete="off"
+						aria-label="Search"
+						placeholder="Search clients, projects, invoices, receipts   ( / )"
+						hx-get="{% url 'reports:search' %}"
+						hx-trigger="input changed delay:250ms, focus"
+						hx-target="#search-results"
+						hx-swap="innerHTML"
+						hx-boost="false"
+						@focus="open = true"
+						@input="open = true"
+						@keydown.window.slash="if (!['INPUT','TEXTAREA','SELECT'].includes($event.target.tagName)) { $event.preventDefault(); $refs.q.focus() }">
+						<c-slot name="left_addon">{% icon "search" %}</c-slot>
+					</c-ui.input>
+					<div
+						id="search-results"
+						x-show="open"
+						x-cloak
+						x-anchor.bottom-start.offset.6="$refs.q"
+						class="z-50 max-h-[70vh] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto rounded-box border border-box-border bg-white p-1 shadow-lg dark:bg-ink-900"
+						@click="open = false"></div>
+				</div>
+
+				<div class="flex items-center gap-1">
+					<span class="hidden sm:block">
+						<c-ui.button variant="primary" size="sm" href="{% url 'billing:invoice-new' %}" class="inline-flex items-center gap-1.5">{% icon "plus" %} New invoice</c-ui.button>
+					</span>
+					<c-ui.mode_toggle />
+					<c-ui.dropdown align="end" min_width="15rem">
+						<c-slot name="trigger">
+							<button type="button"
+								class="grid size-9 cursor-pointer place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground focus-ring"
+								aria-label="Account menu">{{ request.user|initials }}</button>
+						</c-slot>
+						<div class="px-4 py-2 text-xs text-muted">
+							<span class="block text-sm font-medium text-fg">{% firstof request.user.get_full_name request.user.username %}</span>
+							{{ request.staff.get_role_display }}{% if request.staff.title %} · {{ request.staff.title }}{% endif %}
+						</div>
+						<c-ui.dropdown.separator />
+						<c-ui.dropdown.item href="{% url 'account_email' %}">Account and sign-in</c-ui.dropdown.item>
+						{% if request.user.is_staff %}<c-ui.dropdown.item href="{% url 'admin:index' %}" hx-boost="false">Django admin</c-ui.dropdown.item>{% endif %}
+						<c-ui.dropdown.separator />
+						<c-menu-form action="{% url 'account_logout' %}" variant="danger">{% icon "logout" %} Sign out</c-menu-form>
+					</c-ui.dropdown>
+				</div>
+			</header>
+			<main
+				id="main"
+				class="mx-auto w-full max-w-7xl flex-1 p-4 md:p-6">
+				{% block content %}{% endblock %}
+			</main>
+		</div>
+	</div>
+
+	{% include "core/_action_dialog.html" %}
+	{# messages set before a redirect (apps.core.http.redirect_with_message) show as toasts #}
+	{% if messages %}
+		<script>
+			document.addEventListener("alpine:initialized", () => {
+				{% for m in messages %}window.dispatchEvent(new CustomEvent("toast", { detail: { message: "{{ m|escapejs }}", variant: "{% if m.level_tag == 'error' %}error{% elif m.level_tag == 'warning' %}warning{% else %}success{% endif %}" } }));{% endfor %}
+			});
+		</script>
+	{% endif %}
+</c-layout.base>

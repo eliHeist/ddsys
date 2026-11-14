@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Accounts{% endblock %}
+{% block content %}
+<c-page-header title="Accounts" subtitle="Where Dakdot's money is. Balances are worked out from every payment, expense and transfer.">
+  <c-ui.button size="sm" href="{% url 'finance:income-new' %}">{% icon "plus" %} Other money in</c-ui.button>
+  <c-ui.button size="sm" href="{% url 'finance:transfer-new' %}">{% icon "send" %} Transfer</c-ui.button>
+  <c-ui.button size="sm" variant="primary" href="{% url 'finance:expense-new' %}">{% icon "plus" %} Expense</c-ui.button>
+</c-page-header>
+<div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  {% include "core/_ui.html#stat" with label="Total in all accounts" value=total|money %}
+  {% include "core/_ui.html#stat" with label="Money in this month" value=month.in|money hint="Transfers between accounts left out" %}
+  {% include "core/_ui.html#stat" with label="Money out this month" value=month.out|money %}
+  {% include "core/_ui.html#stat" with label="Net this month" value=month.net|money %}
+</div>
+<c-section title="Accounts">
+  <c-slot name="actions">{% if can.admin %}<c-ui.button size="sm" href="{% url 'finance:account-new' %}">{% icon "plus" %} Account</c-ui.button>{% endif %}</c-slot>
+  <ul class="divide-y divide-box-border">
+    {% for a in accounts %}
+      <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 {% if not a.is_active %}text-muted{% endif %}">
+        <div>
+          <a class="font-medium underline" href="{% url 'finance:account' a.pk %}">{{ a.name }}</a>
+          <span class="block text-xs text-muted">{{ a.get_kind_display }}{% if a.account_number %} · {{ a.account_number }}{% endif %}{% if not a.is_active %} · closed{% endif %}</span>
+        </div>
+        <span class="text-lg font-semibold tabular-nums">{{ a.balance|money }}</span>
+      </li>
+    {% empty %}
+      <li>{% include "core/_ui.html#empty" with message="No accounts yet. Run `manage.py seed_basics` or add one." %}</li>
+    {% endfor %}
+  </ul>
+</c-section>
+{% endblock %}

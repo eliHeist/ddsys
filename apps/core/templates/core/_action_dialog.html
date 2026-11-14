@@ -1,0 +1,61 @@
+{% comment %}
+The one dialog for every "ask a few questions, then POST" action. Open it with
+    $dispatch('open-dialog', {title, message, url, submit, danger, target, swap, fields: [{name, label, type, value, required, options}]})
+(see actionDialog in core/_scripts.html). It is built from data, so it is not a <c-ui.dialog> (which is one dialog
+per trigger); it uses the kit's controls and the dialog's look. Alpine bindings on the components use `::`.
+{% endcomment %}
+<div
+	x-data="actionDialog"
+	@open-dialog.window="show($event.detail)"
+	@keydown.escape.window="close()">
+	<template x-if="open">
+		<div>
+			<div class="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm" @click="close()" x-transition.opacity></div>
+			<div
+				class="fixed left-1/2 top-1/2 z-[99] max-h-[90vh] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-box border border-[color:var(--color-box-border)] bg-white p-6 text-ink-900 shadow-xl dark:bg-ink-900 dark:text-ink-100"
+				role="dialog"
+				aria-modal="true"
+				:aria-label="cfg.title"
+				x-trap.noscroll.inert="open"
+				x-transition>
+				<h2 class="text-lg font-semibold" x-text="cfg.title"></h2>
+				<p class="mt-1 text-sm text-muted" x-show="cfg.message" x-text="cfg.message"></p>
+				<form class="mt-4 grid gap-4" @submit.prevent="submit($el)">
+					<div id="dialog-errors" class="text-sm text-red-700 empty:hidden dark:text-red-300" role="alert"></div>
+					<template x-for="f in cfg.fields" :key="f.name">
+						<div>
+							<c-ui.label ::for="'dlg-' + f.name" x-text="f.label"></c-ui.label>
+							<template x-if="f.type === 'select'">
+								<c-ui.select.native placeholder="" ::id="'dlg-' + f.name" ::name="f.name" ::required="f.required">
+									<template x-for="o in f.options" :key="o[0]">
+										<option :value="o[0]" x-text="o[1]" :selected="String(o[0]) === String(f.value)"></option>
+									</template>
+								</c-ui.select.native>
+							</template>
+							<template x-if="f.type === 'textarea'">
+								<c-ui.textarea height="sm" ::id="'dlg-' + f.name" ::name="f.name" ::required="f.required" x-text="f.value"></c-ui.textarea>
+							</template>
+							<template x-if="f.type === 'money'">
+								<c-ui.input inputmode="numeric" ::id="'dlg-' + f.name" ::name="f.name" ::value="f.value" ::required="f.required"
+									x-mask:dynamic="$money($input, '.', ',', 0)" />
+							</template>
+							<template x-if="!['select', 'textarea', 'money'].includes(f.type)">
+								<c-ui.input ::type="f.type || 'text'" ::id="'dlg-' + f.name" ::name="f.name" ::value="f.value" ::required="f.required" />
+							</template>
+						</div>
+					</template>
+					<div class="mt-2 flex justify-end gap-2">
+						<c-ui.button @click="close()">Cancel</c-ui.button>
+						{# only one submit button exists at a time, so Enter submits with the right one #}
+						<template x-if="!cfg.danger">
+							<c-ui.button type="submit" variant="primary" ::disabled="busy" x-text="cfg.submit || 'Save'"></c-ui.button>
+						</template>
+						<template x-if="cfg.danger">
+							<c-ui.button type="submit" variant="danger" ::disabled="busy" x-text="cfg.submit || 'Save'"></c-ui.button>
+						</template>
+					</div>
+				</form>
+			</div>
+		</div>
+	</template>
+</div>

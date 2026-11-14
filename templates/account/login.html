@@ -1,0 +1,96 @@
+{% load i18n %}
+{% load allauth account %}
+
+<c-layout.base>
+    <div class="grid place-content-center h-screen">
+        <c-ui.card class="w-8/10 sm:min-w-md grid gap-4">
+            <h2 class="text-h2">{% trans "Sign In" %}</h2>
+
+            {% if form.non_field_errors %}
+                <div class="space-y-2">
+                    {% for error in form.non_field_errors %}
+                        <c-ui.alert variant="error">{{ error }}</c-ui.alert>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        
+            <!-- Standard Password Form -->
+            <form method="post" action="{% url 'account_login' %}" class="grid gap-4">
+                {% csrf_token %}
+                <!-- {{ form.as_p }} -->
+                <c-ui.field>
+                    <c-ui.label for="{{ form.login.id_for_label }}">
+                        {{ form.login.label }}
+                    </c-ui.label>
+        
+                    <c-ui.input
+                        type="{{ form.login.field.widget.input_type|default:'text' }}"
+                        name="{{ form.login.name }}"
+                        id="{{ form.login.id_for_label }}"
+                        value="{{ form.login.value|default:'' }}"
+                        placeholder="{{ form.login.field.widget.attrs.placeholder|default:'' }}"
+                        required="{{ form.login.field.required }}"
+                    />
+        
+                    {% if form.email.errors %}
+                        <c-ui.error>{{ form.email.errors.0 }}</c-ui.error>
+                    {% endif %}
+        
+                    {% if form.email.help_text %}
+                        <c-ui.description>{{ form.email.help_text }}</c-ui.description>
+                    {% endif %}
+                </c-ui.field>
+                <c-ui.field>
+                    <c-ui.label for="{{ form.password.id_for_label }}">
+                        {{ form.password.label }}
+                    </c-ui.label>
+        
+                    <c-ui.input
+                        type="{{ form.password.field.widget.input_type|default:'text' }}"
+                        name="{{ form.password.name }}"
+                        id="{{ form.password.id_for_label }}"
+                        placeholder="{{ form.password.field.widget.attrs.placeholder|default:'' }}"
+                        required="{{ form.password.field.required }}"
+                    />
+        
+                    {% if form.password.errors %}
+                        <c-ui.error>{{ form.password.errors.0 }}</c-ui.error>
+                    {% endif %}
+        
+                    {% if form.password.help_text %}
+                        <c-ui.description>{{ form.password.help_text }}</c-ui.description>
+                    {% endif %}
+                </c-ui.field>
+                <c-ui.field>
+                    <c-ui.checkbox
+                        name="{{ form.remember.name }}"
+                        id="{{ form.remember.id_for_label }}"
+                        label="{{ form.remember.label }}"
+                    />
+        
+                    {% if form.remember.errors %}
+                        <c-ui.error>{{ form.remember.errors.0 }}</c-ui.error>
+                    {% endif %}
+        
+                    {% if form.remember.help_text %}
+                        <c-ui.description>{{ form.remember.help_text }}</c-ui.description>
+                    {% endif %}
+                </c-ui.field>
+                <c-ui.button variant="primary" type="submit">{% trans "Log In with Password" %}</c-ui.button>
+            </form>
+        
+            {% if PASSKEY_LOGIN_ENABLED %}
+            <h3 class="sr-only">{% trans "Or use a Passkey" %}</h3>
+
+            <c-ui.button type="submit" form="mfa_login" id="passkey_login">
+                {% trans "Sign in with a Passkey" %}
+            </c-ui.button>
+            {% endif %}
+        </c-ui.card>
+    </div>
+
+    {{ block.super }}
+    {% if PASSKEY_LOGIN_ENABLED %}
+        {% include "mfa/webauthn/snippets/login_script.html" with button_id="passkey_login" %}
+    {% endif %}
+</c-layout.base>

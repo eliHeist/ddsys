@@ -1,0 +1,4 @@
+<div id="expense-rows">
+  {% include "finance/partials/_expense_table.html" with expenses=page_obj.object_list %}
+  {% include "core/_ui.html#pager" %}
+</div>

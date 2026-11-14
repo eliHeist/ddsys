@@ -1,0 +1,19 @@
+{% load ui %}
+{% if docs %}
+  <ul class="divide-y divide-box-border">
+    {% for d in docs %}
+      <li class="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+        <div class="min-w-0">
+          <a class="font-medium underline" href="{% url url_name d.pk %}">{{ d.label }}</a>
+          <span class="block text-xs text-muted">{{ d.date|date:"d/m/Y"|default:"Draft" }}{% if d.project_id %} · {{ d.project.title }}{% endif %}</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <c-status status="{{ d.status }}" domain="{{ domain }}" label="{{ d.get_status_display }}" size="sm" />
+          <span class="tabular-nums">{{ d.total|number }}</span>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  {% include "core/_ui.html#empty" with message=empty %}
+{% endif %}

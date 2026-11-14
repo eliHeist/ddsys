@@ -1,0 +1,4 @@
+<div id="receipt-rows">
+  {% include "billing/partials/_receipt_table.html" with receipts=page_obj.object_list %}
+  {% include "core/_ui.html#pager" %}
+</div>

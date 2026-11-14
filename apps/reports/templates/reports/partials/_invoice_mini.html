@@ -1,0 +1,14 @@
+{% load ui %}
+{% if invoices %}
+  <ul class="divide-y divide-box-border">
+    {% for i in invoices %}
+      <li class="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+        <div><a class="font-medium underline" href="{% url 'billing:invoice' i.pk %}">{{ i.label }}</a>
+          <span class="block text-xs text-muted">{{ i.client }} · due {{ i.due_date|date:"j M" }}</span></div>
+        <span class="font-semibold tabular-nums">{{ i.balance|number }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  {% include "core/_ui.html#empty" with message=empty %}
+{% endif %}

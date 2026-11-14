@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Staff{% endblock %}
+{% block content %}
+<c-page-header title="Staff" subtitle="Who can sign in, and what they may do.">
+  <c-ui.button variant="primary" size="sm" href="{% url 'core:staff-new' %}">{% icon "plus" %} Add staff</c-ui.button>
+</c-page-header>
+<c-section>
+  <ul class="divide-y divide-box-border">
+    {% for p in people %}
+      <li class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+        <div>
+          <a href="{% url 'core:staff-edit' p.pk %}" class="font-medium hover:underline">{% firstof p.user.get_full_name p.user.email %}</a>
+          <p class="text-sm text-muted">{{ p.user.email }}{% if p.title %} · {{ p.title }}{% endif %}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <c-status status="{% if p.is_active %}ok{% else %}void{% endif %}" label="{% if p.is_active %}Active{% else %}Inactive{% endif %}" />
+          <c-ui.badge color="ink">{{ p.get_role_display }}</c-ui.badge>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+</c-section>
+{% endblock %}

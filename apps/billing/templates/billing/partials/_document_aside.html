@@ -1,0 +1,20 @@
+{% load ui %}
+{# Facts shared by the quotation and invoice pages. #}
+<c-section title="Details" :padded="True">
+  <dl class="grid gap-2 text-sm">
+    <div class="flex justify-between gap-3"><dt class="text-muted">Client</dt><dd><a class="underline" href="{% url 'clients:detail' doc.client_id %}">{{ doc.client }}</a></dd></div>
+    {% if doc.project %}<div class="flex justify-between gap-3"><dt class="text-muted">Project</dt><dd><a class="underline" href="{% url 'projects:detail' doc.project_id %}">{{ doc.project.title }}</a></dd></div>{% endif %}
+    <div class="flex justify-between gap-3"><dt class="text-muted">Date</dt><dd>{% if doc.date %}{{ doc.date|date:"d/m/Y" }}{% else %}Set when issued{% endif %}</dd></div>
+    {% if doc.valid_until %}<div class="flex justify-between gap-3"><dt class="text-muted">Valid until</dt><dd>{{ doc.valid_until|date:"d/m/Y" }}</dd></div>{% endif %}
+    {% if doc.due_date %}<div class="flex justify-between gap-3"><dt class="text-muted">Due</dt><dd>{{ doc.due_date|date:"d/m/Y" }}</dd></div>{% endif %}
+    {% if doc.quotation_id %}<div class="flex justify-between gap-3"><dt class="text-muted">From quotation</dt><dd><a class="underline" href="{% url 'billing:quotation' doc.quotation_id %}">{{ doc.quotation.label }}</a></dd></div>{% endif %}
+    <div class="flex justify-between gap-3"><dt class="text-muted">Made by</dt><dd>{% firstof doc.created_by.get_full_name doc.created_by.email "-" %}</dd></div>
+    {% if doc.is_void %}<div class="grid gap-1 rounded-control bg-red-50 p-2 text-red-800 dark:bg-red-950/30 dark:text-red-200"><dt class="font-medium">Voided {{ doc.voided_at|date:"j M Y" }}</dt><dd>{{ doc.void_reason }}</dd></div>{% endif %}
+  </dl>
+</c-section>
+{% if doc.notes %}<c-section title="Notes" :padded="True"><p class="whitespace-pre-line text-sm">{{ doc.notes }}</p></c-section>{% endif %}
+{% if doc.term_list %}
+  <c-section title="Terms" :padded="True">
+    <ol class="grid list-decimal gap-1 pl-4 text-sm">{% for t in doc.term_list %}<li>{{ t }}</li>{% endfor %}</ol>
+  </c-section>
+{% endif %}

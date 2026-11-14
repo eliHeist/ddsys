@@ -1,0 +1,39 @@
+{% load ui cotton_ui %}
+{# Small reusable pieces. Use them with {% include "core/_ui.html#stat" with label="Open jobs" value=12 %} #}
+
+{% partialdef stat %}
+  <c-ui.card padding="sm">
+    <dl>
+      <dt class="text-xs font-medium text-muted">{{ label }}</dt>
+      <dd class="mt-1 text-2xl font-semibold tabular-nums text-ink-900 dark:text-ink-100 {% if tone %}{{ tone }}{% endif %}">{{ value }}</dd>
+    </dl>
+    {% if hint %}<p class="mt-1 text-xs text-muted">{{ hint }}</p>{% endif %}
+  </c-ui.card>
+{% endpartialdef %}
+
+{% partialdef empty %}
+  <div class="grid place-items-center gap-2 px-4 py-10 text-center text-sm text-muted">
+    <p>{{ message }}</p>
+    {% if url %}<c-ui.button size="sm" href="{{ url }}">{{ action }}</c-ui.button>{% endif %}
+  </div>
+{% endpartialdef %}
+
+{# Keeps the page's other query parameters (filters, search), which the kit's automatic mode would drop. #}
+{% partialdef pager %}
+  {% if page_obj.has_previous or page_obj.has_next %}
+    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-box-border px-4 py-3 text-sm">
+      <span class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      <c-ui.pagination aria-label="Pages">
+        <c-ui.pagination.prev href="{% if page_obj.has_previous %}{% querystring page=page_obj.previous_page_number %}{% endif %}" :disabled="{% if page_obj.has_previous %}False{% else %}True{% endif %}" />
+        {% for num in page_obj|elided_page_range %}
+          {% if num == "..." %}
+            <c-ui.pagination.ellipsis />
+          {% else %}
+            <c-ui.pagination.item href="{% querystring page=num %}" :current="{% if num == page_obj.number %}True{% else %}False{% endif %}">{{ num }}</c-ui.pagination.item>
+          {% endif %}
+        {% endfor %}
+        <c-ui.pagination.next href="{% if page_obj.has_next %}{% querystring page=page_obj.next_page_number %}{% endif %}" :disabled="{% if page_obj.has_next %}False{% else %}True{% endif %}" />
+      </c-ui.pagination>
+    </div>
+  {% endif %}
+{% endpartialdef %}

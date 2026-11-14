@@ -1,0 +1,21 @@
+{% load ui %}
+{# Expenses as rows. `hide_project` drops the project column (on a project's own page). #}
+{% if expenses %}
+  <c-ui.table>
+    <thead><tr><th>Date</th><th>What</th><th>Category</th>{% if not hide_project %}<th>Project</th>{% endif %}<th>From</th><th class="text-right">Amount</th></tr></thead>
+    <tbody>
+      {% for e in expenses %}
+        <tr class="{% if e.status == 'void' %}text-muted line-through{% endif %}">
+          <td>{{ e.date|date:"d/m/Y" }}</td>
+          <td><a class="underline" href="{% url 'finance:expense' e.pk %}">{{ e.description }}</a>{% if e.payee %}<span class="block text-xs text-muted">{{ e.payee }}</span>{% endif %}</td>
+          <td>{{ e.category }}</td>
+          {% if not hide_project %}<td>{% if e.project_id %}<a class="underline" href="{% url 'projects:detail' e.project_id %}">{{ e.project.title }}</a>{% else %}-{% endif %}</td>{% endif %}
+          <td>{{ e.account }}</td>
+          <td class="text-right tabular-nums">{{ e.amount|number }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </c-ui.table>
+{% else %}
+  {% include "core/_ui.html#empty" with message="No expenses yet." %}
+{% endif %}

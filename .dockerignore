@@ -1,0 +1,8 @@
+.git
+.venv
+**/__pycache__
+*.sqlite3
+garagebaker/.env
+static/node_modules
+static/staticfiles
+static/media

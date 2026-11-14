@@ -1,0 +1,22 @@
+{% comment %}
+Filter tabs plus a live search box above a list. The search refreshes only the rows (#{{ target }}),
+keeping the chosen tab; the views answer that request with the rows partial (wants_partial).
+    <c-list-toolbar target="invoice-rows" q="{{ q }}" status="{{ status }}" :tabs="tabs" placeholder="Search invoices" />
+`tabs` is a list of (value, label); leave it out for a search box alone.
+{% endcomment %}
+<c-vars target="" q="" status="" tabs="" placeholder="Search" />
+
+<div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+  {% if tabs %}
+    <nav class="flex flex-wrap gap-1 text-sm" aria-label="Filter">
+      {% for value, label in tabs %}
+        <a href="?status={{ value }}"
+           class="rounded-control px-3 py-1.5 {% if status == value %}bg-accent text-accent-foreground{% else %}text-muted hover:bg-ink-200 dark:hover:bg-ink-800{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+  {% endif %}
+  <form class="w-full sm:w-72" hx-get="" hx-target="#{{ target }}" hx-swap="outerHTML" hx-trigger="input changed delay:250ms, search, submit" hx-push-url="true">
+    <input type="hidden" name="status" value="{{ status }}">
+    <c-ui.input type="search" name="q" value="{{ q }}" placeholder="{{ placeholder }}" aria-label="{{ placeholder }}" autocomplete="off" />
+  </form>
+</div>

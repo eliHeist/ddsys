@@ -1,0 +1,37 @@
+{% load i18n %}
+
+<c-layout.base>
+    <div class="grid place-content-center h-screen">
+        <c-ui.card class="w-8/10 sm:min-w-md grid">
+            <h2>{% trans "Confirm Access" %}</h2>
+            <p class="text-slate-600">{% trans "Please re-enter your password to continue." %}</p>
+
+            <form method="post" action="{% url 'account_reauthenticate' %}" class="grid gap-4">
+                {% csrf_token %}
+                <c-ui.field>
+                    <c-ui.label for="{{ form.password.id_for_label }}">
+                        {{ form.password.label }}
+                    </c-ui.label>
+                    <c-ui.input type="password" name="{{ form.password.name }}" id="{{ form.password.id_for_label }}" autocomplete="current-password" required />
+                    {% if form.password.errors %}
+                        <c-ui.error>{{ form.password.errors.0 }}</c-ui.error>
+                    {% endif %}
+                </c-ui.field>
+
+                {{ redirect_field }}
+                <c-ui.button variant="primary" type="submit">{% trans "Confirm" %}</c-ui.button>
+            </form>
+
+            {% if reauthentication_alternatives %}
+            <div class="mt-4 border-t border-slate-200 pt-4 grid gap-2">
+                <p class="text-sm text-slate-600">{% trans "Or use another method:" %}</p>
+                {% for alt in reauthentication_alternatives %}
+                    <a href="{{ alt.url }}">
+                        <c-ui.button variant="text">{{ alt.description }}</c-ui.button>
+                    </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </c-ui.card>
+    </div>
+</c-layout.base>

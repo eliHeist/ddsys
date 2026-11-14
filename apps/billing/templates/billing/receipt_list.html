@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Receipts{% endblock %}
+{% block content %}
+<c-page-header title="Receipts" subtitle="Record a payment from its invoice's page." />
+<c-list-toolbar target="receipt-rows" q="{{ q }}" placeholder="Search receipt, invoice, payer, transaction ID" />
+<c-section>{% include "billing/partials/_receipt_rows.html" %}</c-section>
+{% endblock %}

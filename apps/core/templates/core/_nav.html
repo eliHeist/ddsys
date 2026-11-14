@@ -1,0 +1,19 @@
+{% load ui %}
+{# The sidebar menu (items from apps.core.context_processors.nav, filtered by role). Used by the desktop #}
+{# sidebar and the mobile drawer; the drawer shows the brand in its own title bar (in_drawer). #}
+{% if not in_drawer %}
+  <a href="{% url 'reports:dashboard' %}" class="flex h-14 shrink-0 items-center gap-2 border-b border-box-border px-4 font-display text-lg font-semibold">
+    <span class="grid size-7 place-items-center rounded-control bg-accent text-accent-foreground">{{ BRAND|first|lower }}</span>{{ BRAND }}
+  </a>
+{% endif %}
+<div class="flex-1 overflow-y-auto {% if not in_drawer %}p-3{% endif %}">
+  <c-ui.navlist aria-label="Main" class="text-sm">
+    {% for group in nav %}
+      <c-ui.navlist.group heading="{{ group.title }}" :expandable="True">
+        {% for item in group.items %}
+          <c-ui.navlist.item href="{{ item.url }}" :current="item.active">{% icon item.icon %}{{ item.label }}</c-ui.navlist.item>
+        {% endfor %}
+      </c-ui.navlist.group>
+    {% endfor %}
+  </c-ui.navlist>
+</div>

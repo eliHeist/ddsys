@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Quotations{% endblock %}
+{% block content %}
+<c-page-header title="Quotations">
+  <c-ui.button variant="primary" size="sm" href="{% url 'billing:quotation-new' %}">{% icon "plus" %} New quotation</c-ui.button>
+</c-page-header>
+<c-list-toolbar target="quotation-rows" q="{{ q }}" status="{{ status }}" placeholder="Search number, client, item"
+  :tabs="[('', 'All'), ('open', 'Waiting for client'), ('accepted', 'Accepted'), ('declined', 'Declined'), ('draft', 'Drafts'), ('void', 'Void')]" />
+<c-section>{% include "billing/partials/_quotation_rows.html" %}</c-section>
+{% endblock %}

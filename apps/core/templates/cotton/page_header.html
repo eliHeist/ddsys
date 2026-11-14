@@ -1,0 +1,23 @@
+{% comment %}
+The top of a page: optional back link, the title, a line under it, and actions on the right (the slot).
+    <c-page-header title="{{ invoice.label }}" back_url="{% url 'billing:invoices' %}" back_label="Invoices"
+                   subtitle="Due {{ invoice.due_date }}">
+        <c-ui.button variant="primary" size="sm">Record payment</c-ui.button>
+    </c-page-header>
+A `meta` slot goes under the title for richer content (badges, links).
+{% endcomment %}
+<c-vars title="" subtitle="" back_url="" back_label="Back" class="" />
+
+<div {{ attrs }} class="mb-4 grid gap-2 {{ class }}">
+    {% if back_url %}
+        <p class="text-sm"><a href="{{ back_url }}" class="text-muted hover:underline">&larr; {{ back_label }}</a></p>
+    {% endif %}
+    <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+            <h1 class="text-2xl font-semibold tracking-tight text-ink-900 dark:text-ink-100">{{ title }}</h1>
+            {% if subtitle %}<p class="mt-1 text-sm text-muted">{{ subtitle }}</p>{% endif %}
+            {{ meta }}
+        </div>
+        {% if slot %}<div class="flex flex-wrap items-center gap-2">{{ slot }}</div>{% endif %}
+    </div>
+</div>

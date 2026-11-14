@@ -1,0 +1,71 @@
+{% load i18n %}
+
+<c-layout.auth>
+    <main class="mx-auto max-w-3xl px-4 py-12">
+        <c-ui.card>
+            <div class="mb-8">
+                <h1 class="text-2xl font-bold text-slate-900">{% trans "Email Addresses" %}</h1>
+                <p class="mt-1 text-slate-600">{% trans "Manage the email addresses associated with your account." %}</p>
+            </div>
+
+            {% if emailaddresses %}
+            <form method="post" action="{% url 'account_email' %}" class="grid gap-3">
+                {% csrf_token %}
+                {% for radio in emailaddress_radios %}
+                    {% with emailaddress=radio.emailaddress %}
+                    <label class="flex items-center justify-between gap-4 rounded-lg border border-slate-200 p-3">
+                        <span class="flex items-center gap-3">
+                            <input type="radio" name="email" value="{{ emailaddress.email }}" {% if radio.checked %}checked{% endif %} id="{{ radio.id }}">
+                            <span>{{ emailaddress.email }}</span>
+                            {% if emailaddress.verified %}
+                                <c-ui.badge color="green">{% trans "Verified" %}</c-ui.badge>
+                            {% else %}
+                                <c-ui.badge color="amber">{% trans "Unverified" %}</c-ui.badge>
+                            {% endif %}
+                            {% if emailaddress.primary %}
+                                <c-ui.badge color="blue">{% trans "Primary" %}</c-ui.badge>
+                            {% endif %}
+                        </span>
+                    </label>
+                    {% endwith %}
+                {% endfor %}
+
+                <div class="flex flex-wrap gap-3 mt-2">
+                    <c-ui.button variant="subtle" type="submit" name="action_primary">{% trans "Make Primary" %}</c-ui.button>
+                    <c-ui.button variant="subtle" type="submit" name="action_send">{% trans "Re-send Verification" %}</c-ui.button>
+                    <c-ui.button variant="danger" type="submit" name="action_remove">{% trans "Remove" %}</c-ui.button>
+                </div>
+            </form>
+            {% else %}
+            <p class="text-slate-600">{% trans "You currently do not have any email address set up." %}</p>
+            {% endif %}
+
+            {% if can_add_email %}
+            <div class="mt-8 border-t border-slate-200 pt-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4">{% trans "Add Email Address" %}</h2>
+                <form method="post" action="{% url 'account_email' %}" class="grid gap-4">
+                    {% csrf_token %}
+                    <c-ui.field>
+                        <c-ui.label for="{{ add_email_form.email.id_for_label }}">
+                            {{ add_email_form.email.label }}
+                        </c-ui.label>
+
+                        <c-ui.input
+                            type="email"
+                            name="{{ add_email_form.email.name }}"
+                            id="{{ add_email_form.email.id_for_label }}"
+                            required
+                        />
+
+                        {% if add_email_form.email.errors %}
+                            <c-ui.error>{{ add_email_form.email.errors.0 }}</c-ui.error>
+                        {% endif %}
+                    </c-ui.field>
+
+                    <c-ui.button variant="primary" type="submit" name="action_add">{% trans "Add Email" %}</c-ui.button>
+                </form>
+            </div>
+            {% endif %}
+        </c-ui.card>
+    </main>
+</c-layout.auth>

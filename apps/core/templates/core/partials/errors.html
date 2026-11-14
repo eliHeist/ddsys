@@ -1,0 +1,4 @@
+{# Service/form errors, swapped into #form-errors or #dialog-errors by error_response (apps/core/http.py). #}
+<c-ui.alert variant="error" :icon="False">
+  {% if errors|length == 1 %}{{ errors.0 }}{% else %}<ul class="grid list-disc gap-1 pl-4">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+</c-ui.alert>

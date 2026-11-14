@@ -1,0 +1,35 @@
+{% load ui %}
+{# Shell for the signed-in account pages (email addresses, password, two-factor): a slim bar back to the app, #}
+{# then the page. The sign-in pages themselves use <c-layout.base> directly. #}
+<c-layout.base>
+    <header class="sticky top-0 z-40 border-b border-box-border bg-surface/90 backdrop-blur">
+        <div class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4">
+            <a href="{% url 'reports:dashboard' %}" class="inline-flex items-center gap-2 font-semibold">
+                <span class="grid size-8 place-items-center rounded-control bg-accent text-accent-foreground">{{ BRAND|first }}</span>
+                {{ BRAND }}
+            </a>
+            {% if user.is_authenticated %}
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="hidden text-muted sm:inline">{{ user.email }}</span>
+                    <c-ui.button variant="ghost" size="sm" href="{% url 'reports:dashboard' %}">Back to the app</c-ui.button>
+                    <form method="post" action="{% url 'account_logout' %}">
+                        {% csrf_token %}
+                        <c-ui.button variant="subtle" size="sm" type="submit">Sign out</c-ui.button>
+                    </form>
+                </div>
+            {% else %}
+                <c-ui.button variant="ghost" size="sm" href="{% url 'account_login' %}">Sign in</c-ui.button>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if messages %}
+        <div class="mx-auto mt-4 grid max-w-5xl gap-2 px-4">
+            {% for message in messages %}
+                <c-ui.alert variant="{% if message.level_tag == 'error' %}error{% elif message.level_tag == 'warning' %}warning{% elif message.level_tag == 'success' %}success{% else %}info{% endif %}" :dismissible="True">{{ message }}</c-ui.alert>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {{ slot }}
+</c-layout.base>

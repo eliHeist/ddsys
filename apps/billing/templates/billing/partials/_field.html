@@ -1,0 +1,5 @@
+<div>
+  <c-ui.label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-red-600" aria-hidden="true">*</span>{% endif %}</c-ui.label>
+  {{ field }}
+  {% if field.help_text %}<p class="mt-1 text-xs text-muted">{{ field.help_text }}</p>{% endif %}
+</div>

@@ -1,0 +1,18 @@
+{% load ui %}
+{# A quotation's or invoice's lines as the PDF shows them: lump-sum rows print "-" for price and quantity. #}
+<c-ui.table>
+  <thead><tr><th>Description</th><th class="text-right">Price</th><th class="text-right">Qty</th><th class="text-right">Total</th></tr></thead>
+  <tbody>
+    {% for l in doc.lines.all %}
+      <tr>
+        <td>{{ l.description }}{% if l.note %}<span class="block text-xs text-muted">{{ l.note }}</span>{% endif %}</td>
+        <td class="text-right tabular-nums">{% if l.is_lump_sum %}-{% else %}{{ l.unit_price|number }}{% endif %}</td>
+        <td class="text-right tabular-nums">{% if l.is_lump_sum %}-{% else %}{{ l.quantity_label }}{% endif %}</td>
+        <td class="text-right tabular-nums">{{ l.amount|number }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="font-semibold"><td colspan="3" class="text-right">Total</td><td class="text-right tabular-nums">{{ doc.total|money:doc.currency }}</td></tr>
+  </tfoot>
+</c-ui.table>

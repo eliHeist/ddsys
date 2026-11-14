@@ -1,0 +1,16 @@
+<c-vars
+    badge=""
+    :for="None"
+/>
+
+<label
+    {{ attrs.dict|merge:'class:block font-medium text-h6 text-ink-900 dark:text-ink-100 mb-1' }}
+    {% if for %}for="{{ for }}"{% endif %}
+>
+    <span class="flex items-center gap-2">
+        {{ slot }}
+        {% if badge %}
+            <c-ui.badge size="sm" color="ink">{{ badge }}</c-ui.badge>
+        {% endif %}
+    </span>
+</label>

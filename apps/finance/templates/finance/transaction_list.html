@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Transactions{% endblock %}
+{% block content %}
+<c-page-header title="Transactions" subtitle="Every movement of money, newest first." />
+<form class="mb-3 flex flex-wrap items-end gap-2 text-sm" method="get">
+  <label class="grid gap-1"><span class="text-muted">Account</span>
+    <select name="account" class="rounded-control border border-ink-300 bg-[var(--color-input-bg)] px-2 py-1 dark:border-ink-700">
+      <option value="">All</option>{% for a in accounts %}<option value="{{ a.pk }}" {% if filters.account_id == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.name }}</option>{% endfor %}
+    </select></label>
+  <label class="grid gap-1"><span class="text-muted">Kind</span>
+    <select name="kind" class="rounded-control border border-ink-300 bg-[var(--color-input-bg)] px-2 py-1 dark:border-ink-700">
+      <option value="">All</option>{% for value, label in kinds %}<option value="{{ value }}" {% if filters.kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select></label>
+  <label class="grid gap-1"><span class="text-muted">From</span><input type="date" name="from" value="{{ filters.start|date:'Y-m-d' }}" class="rounded-control border border-ink-300 bg-[var(--color-input-bg)] px-2 py-1 dark:border-ink-700"></label>
+  <label class="grid gap-1"><span class="text-muted">To</span><input type="date" name="to" value="{{ filters.end|date:'Y-m-d' }}" class="rounded-control border border-ink-300 bg-[var(--color-input-bg)] px-2 py-1 dark:border-ink-700"></label>
+  <label class="grid gap-1"><span class="text-muted">Search</span><input type="search" name="q" value="{{ q }}" class="rounded-control border border-ink-300 bg-[var(--color-input-bg)] px-2 py-1 dark:border-ink-700"></label>
+  <c-ui.button type="submit" size="sm">Show</c-ui.button>
+</form>
+<c-section>{% include "finance/partials/_transaction_rows.html" %}</c-section>
+{% endblock %}

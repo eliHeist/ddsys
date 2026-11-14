@@ -1,0 +1,77 @@
+<c-vars
+    variant="default"
+    size="md"
+    href=""
+    type="button"
+    :variants="{
+        'default': 'bg-white text-ink-800 border border-ink-200 dark:bg-ink-400/30 dark:text-ink-300 dark:border-ink-300/20 shadow',
+        'primary': 'bg-accent text-accent-foreground hover:bg-accent-content border border-transparent',
+        'secondary': 'bg-secondary text-bg hover:bg-secondary/80 border border-transparent',
+        'subtle': 'bg-ink-100 text-ink-600 dark:bg-ink-300/10 dark:text-ink-300 border border-transparent',
+        'danger': 'bg-red-500 text-white hover:bg-red-600 border border-transparent',
+        'ghost': 'bg-transparent text-ink-800 dark:text-white hover:bg-ink-100 dark:hover:bg-ink-800 border border-transparent',
+        'danger_ghost': 'bg-transparent text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 border border-transparent',
+        'text': 'bg-transparent text-accent hover:text-accent-content hover:underline border border-transparent',
+    }"
+    :outlined_variants="{
+        'default': 'border border-ink-200 text-ink-800 hover:bg-ink-100 dark:border-ink-700 dark:text-ink-300 dark:hover:bg-ink-800',
+        'primary': 'border border-accent text-accent hover:bg-accent/10',
+        'secondary': 'border border-secondary text-secondary hover:bg-secondary/10',
+        'subtle': 'border border-ink-200 text-ink-800 hover:bg-ink-100 dark:border-ink-700 dark:text-ink-300 dark:hover:bg-ink-800',
+        'danger': 'border border-red-500 text-red-500 hover:bg-red-500/10',
+        'ghost': 'border border-ink-400 text-ink-600 hover:bg-ink-100 dark:border-ink-600 dark:text-ink-400 dark:hover:bg-ink-800',
+        'text': 'text-accent hover:text-accent-content hover:underline',
+    }"
+    :size_classes="{
+        'xs': 'text-xs py-1 px-2',
+        'sm': 'text-sm py-1.5 px-3',
+        'md': 'text-sm py-2 px-4',
+        'lg': 'text-base py-2.5 px-4',
+        'xl': 'text-lg py-3 px-5',
+        '2xl': 'text-xl py-3.5 px-6',
+        'icon': 'text-sm size-9',
+        'iconSm': 'text-sm size-6'
+    }"
+    :outlined="False"
+    class
+/>
+
+{% comment %}
+Renders a <button> by default, or an <a> styled as a button when `href` is set
+(for link actions like CTAs, avoiding an invalid button-inside-anchor).
+Project override of the kit's button: `type` works (the kit hard-codes type="button"), the content is an
+inline-flex row so icons line up with text, and it adds the `secondary` and `danger_ghost` variants and the
+`icon` / `iconSm` square sizes. Re-check against the kit's button.html when upgrading django-cotton-ui.
+{% endcomment %}
+{% if href %}
+<a
+    {{ attrs }}
+    href="{{ href }}"
+    class="
+    {% if outlined %}{{ outlined_variants|get_item:variant }}{% else %}{{ variants|get_item:variant }}{% endif %}
+    {% if size == 'icon' or size == 'iconSm' %}inline-grid place-content-center{% else %}inline-flex items-center justify-center gap-1.5{% endif %}
+    no-underline cursor-pointer whitespace-nowrap rounded-button
+    {{ size_classes|get_item:size }}
+    {% if variant == 'text' %}!px-0{% endif %}
+    font-medium transition text-center
+    focus-ring
+    active:opacity-100
+    {{ class }}">
+    {{ slot }}
+</a>
+{% else %}
+<button {{ attrs }} type="{{ type }}" class="
+    {% if outlined %}{{ outlined_variants|get_item:variant }}{% else %}{{ variants|get_item:variant }}{% endif %}
+    {% if size == 'icon' or size == 'iconSm' %}inline-grid place-content-center{% else %}inline-flex items-center justify-center gap-1.5{% endif %}
+    cursor-pointer whitespace-nowrap rounded-button
+    {{ size_classes|get_item:size }}
+    {% if variant == 'text' %}!px-0{% endif %}
+    font-medium transition text-center
+    focus-ring
+    active:opacity-100
+    disabled:opacity-75
+    disabled:cursor-not-allowed
+    {{ class }}">
+    {{ slot }}
+</button>
+{% endif %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Expense{% endblock %}
+{% block content %}
+<c-page-header title="{{ expense.description }}" back_url="{% url 'finance:expenses' %}" back_label="Expenses">
+  <c-slot name="meta"><div class="mt-1"><c-status status="{% if expense.status == 'void' %}void{% else %}ok{% endif %}" label="{{ expense.get_status_display }}" /></div></c-slot>
+  {% if expense.status == "valid" %}
+    <c-ui.button variant="danger" :outlined="True" @click='$dispatch("open-dialog", {{ void_dialog|jsattr }})'>Void</c-ui.button>
+  {% endif %}
+</c-page-header>
+<div id="form-errors" class="mb-3 text-sm empty:hidden" role="alert"></div>
+<c-section :padded="True" class="max-w-2xl">
+  <dl class="grid gap-2 text-sm">
+    <div class="flex justify-between gap-3"><dt class="text-muted">Amount</dt><dd class="text-lg font-semibold tabular-nums">{{ expense.amount|money }}</dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Date</dt><dd>{{ expense.date|date:"d/m/Y" }}</dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Category</dt><dd>{{ expense.category }}</dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Paid from</dt><dd><a class="underline" href="{% url 'finance:account' expense.account_id %}">{{ expense.account }}</a></dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Paid to</dt><dd>{{ expense.payee|default:"-" }}</dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Project</dt><dd>{% if expense.project %}<a class="underline" href="{% url 'projects:detail' expense.project_id %}">{{ expense.project.title }}</a>{% else %}-{% endif %}</dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Reference</dt><dd>{{ expense.reference|default:"-" }}</dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Recorded by</dt><dd>{% firstof expense.created_by.get_full_name expense.created_by.email "-" %}</dd></div>
+    {% if expense.attachment %}<div class="flex justify-between gap-3"><dt class="text-muted">Receipt</dt><dd><a class="underline" href="{{ expense.attachment.url }}" target="_blank" hx-boost="false">Open</a></dd></div>{% endif %}
+    {% if expense.status == "void" %}<div class="grid gap-1 rounded-control bg-red-50 p-2 text-red-800 dark:bg-red-950/30 dark:text-red-200"><dt class="font-medium">Voided {{ expense.voided_at|date:"j M Y" }}</dt><dd>{{ expense.void_reason }}</dd></div>{% endif %}
+  </dl>
+</c-section>
+{% endblock %}

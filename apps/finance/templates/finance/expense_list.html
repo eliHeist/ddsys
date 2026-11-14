@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Expenses{% endblock %}
+{% block content %}
+<c-page-header title="Expenses">
+  <c-ui.button variant="primary" size="sm" href="{% url 'finance:expense-new' %}">{% icon "plus" %} Record expense</c-ui.button>
+</c-page-header>
+<c-list-toolbar target="expense-rows" q="{{ q }}" placeholder="Search description, payee, reference" />
+<c-section>{% include "finance/partials/_expense_rows.html" %}</c-section>
+{% endblock %}

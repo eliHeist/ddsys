@@ -1,0 +1,20 @@
+{% load ui %}
+{# Receipts as rows. `hide_invoice` drops the invoice column (on an invoice's own page). #}
+{% if receipts %}
+  <c-ui.table>
+    <thead><tr><th>Receipt</th><th>Date</th>{% if not hide_invoice %}<th>Invoice</th><th>From</th>{% endif %}<th>Into</th><th class="text-right">Amount</th></tr></thead>
+    <tbody>
+      {% for r in receipts %}
+        <tr class="{% if r.status == 'void' %}text-muted line-through{% endif %}">
+          <td><a class="font-medium underline" href="{% url 'billing:receipt' r.pk %}">{{ r.number }}</a></td>
+          <td>{{ r.date|date:"d/m/Y" }}</td>
+          {% if not hide_invoice %}<td><a class="underline" href="{% url 'billing:invoice' r.invoice_id %}">{{ r.invoice.number }}</a></td><td>{{ r.received_from }}</td>{% endif %}
+          <td>{{ r.account }}{% if r.reference %}<span class="block text-xs text-muted">{{ r.reference }}</span>{% endif %}</td>
+          <td class="text-right tabular-nums">{{ r.amount|number }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </c-ui.table>
+{% else %}
+  {% include "core/_ui.html#empty" with message="No payments yet." %}
+{% endif %}

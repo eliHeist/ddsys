@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{{ doc.label }}{% endblock %}
+{% block content %}
+<c-page-header title="{{ doc.label }}" back_url="{% url 'billing:invoices' %}" back_label="Invoices">
+  <c-slot name="meta">
+    <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+      <c-status status="{{ doc.status }}" label="{{ doc.get_status_display }}" />
+      <span>{{ doc.client }}</span>
+    </div>
+  </c-slot>
+  {% if doc.is_draft %}
+    <c-ui.button href="{% url 'billing:invoice-edit' doc.pk %}">{% icon "edit" %} Edit</c-ui.button>
+    {% if can.money %}
+      <c-ui.button variant="primary" hx-post="{% url 'billing:invoice-issue' doc.pk %}" hx-confirm="Issue this invoice? It gets today's date and its number, and can no longer be changed.">{% icon "send" %} Issue</c-ui.button>
+    {% endif %}
+    <c-ui.button variant="danger" :outlined="True" hx-post="{% url 'billing:invoice-delete' doc.pk %}" hx-confirm="Delete this draft?">Delete draft</c-ui.button>
+  {% else %}
+    <c-ui.button href="{% url 'documents:pdf' 'invoice' doc.pk %}" target="_blank" hx-boost="false">{% icon "download" %} PDF</c-ui.button>
+    {% if payment_dialog and can.money %}
+      <c-ui.button variant="primary" @click='$dispatch("open-dialog", {{ payment_dialog|jsattr }})'>{% icon "cash" %} Record payment</c-ui.button>
+    {% endif %}
+    {% if can.money and not doc.is_void %}
+      <c-ui.button variant="danger" :outlined="True" @click='$dispatch("open-dialog", {{ void_dialog|jsattr }})'>Void</c-ui.button>
+    {% endif %}
+  {% endif %}
+</c-page-header>
+<div id="form-errors" class="mb-3 text-sm empty:hidden" role="alert"></div>
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="grid content-start gap-4">
+    <c-section>{% include "billing/partials/_document_lines.html" %}</c-section>
+    {% if not doc.is_draft %}
+      <c-section title="Payments" count="{{ doc.receipts.all|length }}">
+        {% include "billing/partials/_receipt_table.html" with receipts=doc.receipts.all hide_invoice=True %}
+      </c-section>
+    {% endif %}
+  </div>
+  <aside class="grid content-start gap-4">
+    {% if not doc.is_draft %}
+      <c-section title="Balance" :padded="True">
+        <div class="grid gap-1 text-sm">
+          <p class="flex justify-between"><span class="text-muted">Total</span><span class="tabular-nums">{{ doc.total|money:doc.currency }}</span></p>
+          <p class="flex justify-between"><span class="text-muted">Paid</span><span class="tabular-nums">{{ doc.amount_paid|money:doc.currency }}</span></p>
+          <p class="flex justify-between border-t border-box-border pt-2 text-base font-semibold"><span>Balance due</span><span class="tabular-nums">{{ doc.balance|money:doc.currency }}</span></p>
+        </div>
+      </c-section>
+    {% endif %}
+    {% include "billing/partials/_document_aside.html" %}
+  </aside>
+</div>
+{% endblock %}

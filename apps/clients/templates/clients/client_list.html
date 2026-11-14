@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<c-page-header title="Clients">
+  <c-ui.button variant="primary" size="sm" href="{% url 'clients:new' %}">{% icon "plus" %} New client</c-ui.button>
+</c-page-header>
+<c-list-toolbar target="client-rows" q="{{ q }}" placeholder="Search name, contact, phone, email" />
+<c-section>{% include "clients/partials/_client_rows.html" %}</c-section>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Invoices{% endblock %}
+{% block content %}
+<c-page-header title="Invoices" subtitle="Owed to Dakdot right now: {{ outstanding|money }}">
+  <c-ui.button variant="primary" size="sm" href="{% url 'billing:invoice-new' %}">{% icon "plus" %} New invoice</c-ui.button>
+</c-page-header>
+<c-list-toolbar target="invoice-rows" q="{{ q }}" status="{{ status }}" placeholder="Search number, client, item"
+  :tabs="[('', 'All'), ('open', 'Unpaid'), ('overdue', 'Overdue'), ('paid', 'Paid'), ('draft', 'Drafts'), ('void', 'Void')]" />
+<c-section>{% include "billing/partials/_invoice_rows.html" %}</c-section>
+{% endblock %}

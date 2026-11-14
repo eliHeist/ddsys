@@ -1,0 +1,12 @@
+{% load ui %}
+{% comment %}
+A status badge: colour from the status (`status_color` in apps/core/templatetags/ui.py), text from `label`.
+    <c-status status="{{ job.status }}" label="{{ job.get_status_display }}" />
+    <c-status status="{{ q.status }}" domain="quote" label="{{ q.get_status_display }}" />
+    <c-status color="amber">Waiting for customer</c-status>   (fixed colour, slot text)
+{% endcomment %}
+<c-vars status="" domain="" label="" color="" size="md" />
+
+<c-ui.badge color="{% firstof color status|status_color:domain %}" size="{{ size }}" variant="pill" :attrs="attrs">
+    <span class="size-1.5 rounded-full bg-current" aria-hidden="true"></span>{% if label %}{{ label }}{% else %}{{ slot }}{% endif %}
+</c-ui.badge>

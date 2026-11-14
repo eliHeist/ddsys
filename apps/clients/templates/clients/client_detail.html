@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{{ client.name }}{% endblock %}
+{% block content %}
+<c-page-header title="{{ client.name }}" back_url="{% url 'clients:list' %}" back_label="Clients"
+  subtitle="{% if client.contact_person %}{{ client.contact_person }} · {% endif %}{{ client.phone }}{% if client.email %} · {{ client.email }}{% endif %}">
+  <c-ui.button href="{% url 'clients:edit' client.pk %}">{% icon "edit" %} Edit</c-ui.button>
+  <c-ui.button href="{% url 'clients:statement' client.pk %}">{% icon "printer" %} Statement</c-ui.button>
+  <c-ui.button href="{% url 'projects:new' %}?client={{ client.pk }}">{% icon "plus" %} Project</c-ui.button>
+  <c-ui.button variant="primary" href="{% url 'billing:invoice-new' %}?client={{ client.pk }}">{% icon "plus" %} Invoice</c-ui.button>
+</c-page-header>
+<div class="mb-4 grid gap-3 sm:grid-cols-3">
+  {% include "core/_ui.html#stat" with label="Owes Dakdot" value=balance|money %}
+  {% include "core/_ui.html#stat" with label="Projects" value=projects|length %}
+  {% include "core/_ui.html#stat" with label="Invoices" value=invoices|length %}
+</div>
+<div class="grid gap-4 lg:grid-cols-2">
+  <c-section title="Projects">
+    {% include "projects/partials/_project_list.html" with projects=projects %}
+  </c-section>
+  <c-section title="Invoices">
+    {% include "clients/partials/_document_list.html" with docs=invoices url_name="billing:invoice" empty="No invoices yet." %}
+  </c-section>
+  <c-section title="Quotations">
+    {% include "clients/partials/_document_list.html" with docs=quotations url_name="billing:quotation" domain="quote" empty="No quotations yet." %}
+  </c-section>
+  <c-section title="Details" :padded="True">
+    <dl class="grid gap-2 text-sm">
+      <div class="flex justify-between gap-3"><dt class="text-muted">Address</dt><dd>{{ client.address|default:"-" }}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">TIN</dt><dd>{{ client.tin|default:"-" }}</dd></div>
+      {% if client.notes %}<div class="grid gap-1"><dt class="text-muted">Notes</dt><dd class="whitespace-pre-line">{{ client.notes }}</dd></div>{% endif %}
+    </dl>
+  </c-section>
+</div>
+{% endblock %}

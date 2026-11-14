@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{# The quotation and invoice editor (billing/views/editor.py). Saving keeps it a draft; issuing happens on its page. #}
+<c-page-header title="{{ title }}" back_url="{{ cancel_url }}" back_label="Back"
+  subtitle="Saved as a draft. It gets its number and date when you issue it." />
+<form method="post" hx-post="" class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+  {% csrf_token %}
+  <div class="grid content-start gap-4">
+    <div id="form-errors" class="text-sm empty:hidden" role="alert"></div>
+    <c-section title="Lines" :padded="True">
+      {% include "billing/partials/_line_editor.html" %}
+    </c-section>
+  </div>
+  <aside class="grid content-start gap-4">
+    <c-section title="Details" :padded="True">
+      <div class="grid gap-4">
+        {% include "billing/partials/_field.html" with field=form.client %}
+        {% include "billing/partials/_field.html" with field=form.project %}
+        {% include "billing/partials/_field.html" with field=form.date_limit %}
+        {% include "billing/partials/_field.html" with field=form.notes %}
+        {% include "billing/partials/_field.html" with field=form.terms %}
+      </div>
+    </c-section>
+    <div class="flex justify-end gap-2">
+      <c-ui.button href="{{ cancel_url }}">Cancel</c-ui.button>
+      <c-ui.button type="submit" variant="primary">Save draft</c-ui.button>
+    </div>
+  </aside>
+</form>
+{% endblock %}
