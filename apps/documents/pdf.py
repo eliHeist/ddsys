@@ -3,6 +3,7 @@ margins, and the contact line at the foot of every page. Layouts (layouts.py) us
 for styling, so restyling happens here."""
 
 from decimal import Decimal
+from io import BytesIO
 from pathlib import Path
 
 from fpdf import FPDF
@@ -50,10 +51,17 @@ class DakdotPDF(FPDF):
             return
         x, top = (self.w - LOGO_WIDTH) / 2, MARGIN_TOP
         try:
-            self.image(self.company.logo.path if self.company.logo else LOGO, x=x, y=top, w=LOGO_WIDTH)
-        except (OSError, ValueError):
+            self.image(self._uploaded_logo() or LOGO, x=x, y=top, w=LOGO_WIDTH)
+        except (OSError, ValueError, RuntimeError):
             self.image(LOGO, x=x, y=top, w=LOGO_WIDTH)
         self.set_y(top + LOGO_WIDTH * 79 / 172 + 6)
+
+    def _uploaded_logo(self):
+        """The logo from the company settings, read through the storage (disk or Azure Blob), or None."""
+        if not self.company.logo:
+            return None
+        with self.company.logo.open("rb") as file:
+            return BytesIO(file.read())
 
     def footer(self):
         if self.void:

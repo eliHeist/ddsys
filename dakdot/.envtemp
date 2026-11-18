@@ -31,6 +31,20 @@ ADMINS=
 API_RATE_LIMIT=120/m
 API_DOCS_ENABLED=True
 NINJA_NUM_PROXIES=0
+# Azure Blob Storage (production). Either the connection string, or the account name and key.
+AZURE_CONNECTION_STRING=
+AZURE_ACCOUNT_NAME=
+AZURE_ACCOUNT_KEY=
+# Uploads (receipts, logo): a PRIVATE container. Empty: kept on disk in media/
+AZURE_CONTAINER=
+# How long a link to a receipt works, in seconds
+AZURE_URL_EXPIRATION_SECS=300
+# Static files (CSS, JS, fonts): a PUBLIC (blob) container, uploaded by collectstatic on every deploy.
+# Empty: the app serves them itself. Its CORS must allow GET from your domain, for the fonts.
+AZURE_STATIC_CONTAINER=
+# Optional CDN or custom domain in front of the static container, e.g. static.dakdot.com
+AZURE_STATIC_DOMAIN=
+
 # Cache (API rate limit, sign-in lockouts). Leave unset: memory locally, a database table in production,
 # shared by all workers. Only set it to change that, e.g. CACHE_URL=redis://localhost:6379/1 one day.
 # CACHE_URL=

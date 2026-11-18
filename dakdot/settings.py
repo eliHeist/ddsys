@@ -139,19 +139,48 @@ SERVER_EMAIL = env("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 # Who gets an email with the details when a page crashes (DEBUG=False only), e.g. ADMINS=elijah@dakdot.com
 ADMINS = [(email.split("@")[0], email) for email in env.list("ADMINS", default=[])]
 
-# Static files: Vite builds static/src into static/dist, which Django serves
+# Static files: Vite builds static/src into static/dist, and `collectstatic` gathers them into one place.
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static" / "dist"]
 STATIC_ROOT = BASE_DIR / "static" / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage" if DEBUG or TESTING
-        else "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
+
+# Azure Blob Storage (production). Give either AZURE_CONNECTION_STRING, or AZURE_ACCOUNT_NAME with AZURE_ACCOUNT_KEY.
+# - Uploads (expense receipts, the company logo), with AZURE_CONTAINER set: a private container, every link a
+#   signed URL that expires after AZURE_URL_EXPIRATION_SECS. Unset: on disk in MEDIA_ROOT, served to signed-in
+#   staff by apps.core.views.media_file.
+# - Static files (CSS, JS, fonts), with AZURE_STATIC_CONTAINER set: a public container, filled by `collectstatic`
+#   on every deploy (entrypoint.sh). Unset: served by the app itself (whitenoise).
+AZURE = {
+    "connection_string": env("AZURE_CONNECTION_STRING", default="") or None,
+    "account_name": env("AZURE_ACCOUNT_NAME", default="") or None,
+    "account_key": env("AZURE_ACCOUNT_KEY", default="") or None,
 }
+AZURE_MEDIA_CONTAINER = env("AZURE_MEDIA_CONTAINER", default="")
+AZURE_STATIC_CONTAINER = env("AZURE_STATIC_CONTAINER", default="")
+
+if AZURE_MEDIA_CONTAINER:
+    MEDIA_STORAGE = {"BACKEND": "storages.backends.azure_storage.AzureStorage", "OPTIONS": {
+        **AZURE, "azure_container": AZURE_MEDIA_CONTAINER, "overwrite_files": False,
+        "expiration_secs": env.int("AZURE_URL_EXPIRATION_SECS", default=300),
+    }}
+else:
+    MEDIA_STORAGE = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
+
+if AZURE_STATIC_CONTAINER:
+    # Public links, no signature. AZURE_STATIC_DOMAIN puts a CDN or custom domain in front, e.g. static.dakdot.com.
+    STATIC_STORAGE = {"BACKEND": "apps.core.storages.AzureStaticStorage", "OPTIONS": {
+        **AZURE, "azure_container": AZURE_STATIC_CONTAINER, "expiration_secs": None, "overwrite_files": True,
+        "custom_domain": env("AZURE_STATIC_DOMAIN", default="") or None,
+        "cache_control": "public, max-age=31536000, immutable",  # names are hashed, so cache them for good
+    }}
+elif DEBUG or TESTING:
+    STATIC_STORAGE = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
+else:
+    STATIC_STORAGE = {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}
+
+STORAGES = {"default": MEDIA_STORAGE, "staticfiles": STATIC_STORAGE}
 
 # API (apps/api, django-ninja) for Dakdot's products' apps
 API_RATE_LIMIT = env("API_RATE_LIMIT", default="120/m")  # per key; "<number>/<s|m|h|d>"
