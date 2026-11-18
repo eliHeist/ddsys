@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import sys
 from pathlib import Path
 
@@ -38,11 +40,15 @@ INSTALLED_APPS = [
     "django_cotton",
     "django_cotton_ui",
     "simple_history",
+    "ninja",
 ]
 if DEBUG and not TESTING:
     INSTALLED_APPS.append("debug_toolbar")
 
-INSTALLED_APPS += getAppNames()
+# apps.core goes before django_cotton_ui so the kit overrides in apps/core/templates/cotton/ui/ win: with APP_DIRS,
+# the first app holding a template path is the one used.
+INSTALLED_APPS.insert(INSTALLED_APPS.index("django_cotton_ui"), "apps.core")
+INSTALLED_APPS += [name for name in getAppNames() if name != "apps.core"]
 
 SITE_ID = 1
 
@@ -129,6 +135,9 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Dakdot Creations <connect@dakdot.com>")
+SERVER_EMAIL = env("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+# Who gets an email with the details when a page crashes (DEBUG=False only), e.g. ADMINS=elijah@dakdot.com
+ADMINS = [(email.split("@")[0], email) for email in env.list("ADMINS", default=[])]
 
 # Static files: Vite builds static/src into static/dist, which Django serves
 STATIC_URL = "static/"
@@ -143,6 +152,25 @@ STORAGES = {
         else "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+# API (apps/api, django-ninja) for Dakdot's products' apps
+API_RATE_LIMIT = env("API_RATE_LIMIT", default="120/m")  # per key; "<number>/<s|m|h|d>"
+API_DOCS_ENABLED = env.bool("API_DOCS_ENABLED", default=True)  # /api/v1/docs, admins only
+NINJA_PAGINATION_CLASS = "ninja.pagination.LimitOffsetPagination"
+NINJA_PAGINATION_PER_PAGE = 50
+NINJA_PAGINATION_MAX_LIMIT = 200
+NINJA_NUM_PROXIES = env.int("NINJA_NUM_PROXIES", default=0)  # proxies in front of the app (for client IPs)
+
+# Cache: the API rate limit and sign-in lockouts are counted here, so every worker must share it. In production it
+# is a table in the database (no Redis needed; entrypoint.sh creates it with `manage.py createcachetable`).
+# Locally it is in memory. CACHE_URL overrides either, e.g. redis://localhost:6379/1 later on.
+CACHES = {"default": env.cache("CACHE_URL", default="locmemcache://" if DEBUG or TESTING else "dbcache://django_cache")}
+
+# Encrypts project secrets (apps.core.crypto). Required in production: `uv run manage.py secrets_key` makes one.
+# Locally it falls back to a key made from SECRET_KEY, so secrets saved in development need no setup.
+SECRETS_KEY = env("SECRETS_KEY", default="")
+if not SECRETS_KEY and (DEBUG or TESTING):
+    SECRETS_KEY = base64.urlsafe_b64encode(hashlib.sha256(SECRET_KEY.encode()).digest()).decode()
 
 BRAND_NAME = env("BRAND_NAME", default="Dakdot")
 DEFAULT_CURRENCY = "UGX"

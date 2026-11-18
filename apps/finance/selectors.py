@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.db.models import Case, DecimalField, F, Q, Sum, When
 
-from .models import Account, Expense, Transaction
+from .models import Account, Expense, Loan, Transaction
 
 SIGNED = Case(When(direction=Transaction.Direction.IN, then=F("amount")), default=-F("amount"),
               output_field=DecimalField(max_digits=14, decimal_places=2))
@@ -32,7 +32,7 @@ async def account_ledger(account, start=None, end=None):
     if start:
         before = await account.transactions.filter(is_void=False, date__lt=start).aaggregate(s=Sum(SIGNED))
         running += before["s"] or 0
-    txns = account.transactions.select_related("receipt", "expense", "transfer").order_by("date", "created_at")
+    txns = account.transactions.select_related("receipt", "expense", "transfer", "loan").order_by("date", "created_at")
     if start:
         txns = txns.filter(date__gte=start)
     if end:
@@ -48,7 +48,7 @@ async def account_ledger(account, start=None, end=None):
 
 
 def transactions_for(account_id="", kind="", start=None, end=None, query=""):
-    txns = Transaction.objects.select_related("account", "receipt", "expense", "transfer")
+    txns = Transaction.objects.select_related("account", "receipt", "expense", "transfer", "loan")
     if account_id:
         txns = txns.filter(account_id=account_id)
     if kind:
@@ -63,7 +63,7 @@ def transactions_for(account_id="", kind="", start=None, end=None, query=""):
 
 
 def expenses_for(category_id="", project_id="", start=None, end=None, query=""):
-    expenses = Expense.objects.select_related("account", "category", "project")
+    expenses = Expense.objects.select_related("account", "category", "project", "loan")
     if category_id:
         expenses = expenses.filter(category_id=category_id)
     if project_id:
@@ -86,3 +86,49 @@ async def month_totals(year, month):
     money_in = (await base.filter(direction=Transaction.Direction.IN).aaggregate(s=Sum("amount")))["s"] or Decimal(0)
     money_out = (await base.filter(direction=Transaction.Direction.OUT).aaggregate(s=Sum("amount")))["s"] or Decimal(0)
     return {"in": money_in, "out": money_out, "net": money_in - money_out}
+
+
+def with_repaid(loans):
+    """Annotate `repaid`: what valid repayments have paid back."""
+    from django.db.models.functions import Coalesce
+    from django.db.models import Value
+    return loans.annotate(repaid=Coalesce(
+        Sum("repayments__amount", filter=Q(repayments__status="valid")), Value(Decimal(0)),
+        output_field=DecimalField(max_digits=14, decimal_places=2)))
+
+
+LOAN_FILTERS = {"owing": {"status": "valid", "must_repay": True}, "all": {}}
+
+
+async def loans_for(status="owing", query=""):
+    """Loans with `repaid` and `owed` set, newest first. "owing": still to be paid back (fully repaid ones drop out)."""
+    loans = with_repaid(Loan.objects.select_related("person__user", "account"))
+    if status == "owing":
+        loans = loans.filter(status="valid", must_repay=True)
+    if query:
+        loans = loans.filter(Q(lender_name__icontains=query) | Q(purpose__icontains=query) | Q(reference__icontains=query))
+    rows = []
+    async for loan in loans:
+        loan.owed = loan.balance_with(loan.repaid)
+        if status == "owing" and loan.owed <= 0:
+            continue
+        rows.append(loan)
+    return rows
+
+
+async def loan_totals():
+    """What the company owes back: to directors, to other staff (their claims and top-ups), and to outside lenders."""
+    owed = {"directors": Decimal(0), "staff": Decimal(0), "others": Decimal(0)}
+    async for loan in with_repaid(Loan.objects.filter(status="valid", must_repay=True).select_related("person")):
+        group = "others" if loan.person_id is None else ("directors" if loan.person.is_director else "staff")
+        owed[group] += loan.balance_with(loan.repaid)
+    owed["total"] = owed["directors"] + owed["staff"] + owed["others"]
+    return owed
+
+
+async def loan_detail(pk):
+    loan = await with_repaid(Loan.objects.select_related("person__user", "account", "created_by")).aget(pk=pk)
+    loan.owed = loan.balance_with(loan.repaid)
+    loan.repayment_rows = [r async for r in loan.repayments.select_related("account")]
+    loan.expense_rows = [e async for e in loan.expenses.select_related("category", "project", "account", "loan")]
+    return loan

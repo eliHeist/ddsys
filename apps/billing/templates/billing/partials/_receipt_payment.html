@@ -1,0 +1,18 @@
+{% load ui %}
+{# The money itself: how much, when, where it went. #}
+<c-section title="Payment" :padded="True">
+  <dl class="grid gap-2 text-sm">
+    <div class="flex justify-between gap-3"><dt class="text-muted">Amount received</dt><dd class="text-lg font-semibold tabular-nums">{{ receipt.amount|money:receipt.currency }}</dd></div>
+    {% if receipt.fee %}
+      <div class="flex justify-between gap-3"><dt class="text-muted">Fee taken off</dt><dd class="tabular-nums">{{ receipt.fee|money }}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">Landed in {{ receipt.account }}</dt><dd class="font-semibold tabular-nums">{{ receipt.net_received|money }}</dd></div>
+    {% endif %}
+    <div class="flex justify-between gap-3"><dt class="text-muted">In words</dt><dd class="text-right">{{ receipt.amount_in_words }}</dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Date</dt><dd>{{ receipt.date|date:"d/m/Y" }}</dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Into</dt><dd><a class="link" href="{% url 'finance:account' receipt.account_id %}">{{ receipt.account }}</a></dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Transaction ID</dt><dd>{{ receipt.reference|default:"-" }}</dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Recorded by</dt><dd>{% firstof receipt.received_by.get_full_name receipt.received_by.email "-" %}</dd></div>
+    <div class="grid gap-1"><dt class="text-muted">Being payment for</dt><dd>{{ receipt.being_payment_for }}</dd></div>
+    {% if receipt.status == "void" %}<div class="grid gap-1 rounded-control bg-red-50 p-2 text-red-800 dark:bg-red-950/30 dark:text-red-200"><dt class="font-medium">Voided {{ receipt.voided_at|date:"j M Y" }}</dt><dd>{{ receipt.void_reason }}</dd></div>{% endif %}
+  </dl>
+</c-section>

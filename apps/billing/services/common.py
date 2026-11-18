@@ -25,19 +25,25 @@ def clean_line(spec):
             "quantity": quantity, "unit_price": unit_price, "is_lump_sum": is_lump_sum}
 
 
-def replace_lines(document, line_model, parent_field, specs):
-    """Swap a draft's lines for `specs` and recalculate its total."""
+def write_lines(parent, line_model, parent_field, specs):
+    """Swap `parent`'s lines for `specs` (checked first)."""
     cleaned = [clean_line(spec) for spec in specs]
     if not cleaned:
         raise ValidationError("Add at least one line.")
-    line_model.objects.filter(**{parent_field: document}).delete()
+    line_model.objects.filter(**{parent_field: parent}).delete()
     line_model.objects.bulk_create(
-        [line_model(**{parent_field: document}, sort_order=i, **spec) for i, spec in enumerate(cleaned)]
+        [line_model(**{parent_field: parent}, sort_order=i, **spec) for i, spec in enumerate(cleaned)]
     )
+
+
+def replace_lines(document, line_model, parent_field, specs):
+    """Swap a draft's lines for `specs` and recalculate its total."""
+    write_lines(document, line_model, parent_field, specs)
     document.recalculate()
 
 
 def copy_lines(source, line_model, parent_field, target):
+    """Copy a quotation's or subscription's lines onto a new draft and total it."""
     line_model.objects.bulk_create([
         line_model(**{parent_field: target}, sort_order=line.sort_order,
                    **{f: getattr(line, f) for f in LINE_FIELDS})
@@ -52,7 +58,8 @@ def assert_draft(document):
 
 
 def assert_project_matches(client, project):
-    if project is not None and project.client_id != client.pk:
+    """A client project takes only its client's documents; Dakdot's own projects (no client) take anyone's."""
+    if project is not None and project.client_id and project.client_id != client.pk:
         raise ValidationError(f"The project “{project.title}” belongs to {project.client}, not {client}.")
 
 

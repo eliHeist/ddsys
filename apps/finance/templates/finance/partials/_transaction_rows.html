@@ -7,7 +7,7 @@
         {% for t in page_obj %}
           <tr class="{% if t.is_void %}text-muted line-through{% endif %}">
             <td>{{ t.date|date:"d/m/Y" }}</td>
-            <td><a class="underline" href="{% url 'finance:account' t.account_id %}">{{ t.account }}</a></td>
+            <td><a class="link" href="{% url 'finance:account' t.account_id %}">{{ t.account }}</a></td>
             <td>{% include "finance/partials/_transaction_link.html" %}</td>
             <td class="text-right tabular-nums">{% if t.direction == "in" %}{{ t.amount|number }}{% endif %}</td>
             <td class="text-right tabular-nums">{% if t.direction == "out" %}{{ t.amount|number }}{% endif %}</td>

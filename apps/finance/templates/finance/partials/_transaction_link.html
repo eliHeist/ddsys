@@ -1,5 +1,6 @@
-{# A transaction's description, linked to the receipt or expense it came from. #}
-{% if t.receipt_id %}<a class="underline" href="{% url 'billing:receipt' t.receipt_id %}">{{ t.description }}</a>
-{% elif t.expense_id %}<a class="underline" href="{% url 'finance:expense' t.expense_id %}">{{ t.description }}</a>
+{# A transaction's description, linked to the receipt, expense or loan it came from. #}
+{% if t.receipt_id %}<a class="link" href="{% url 'billing:receipt' t.receipt_id %}">{{ t.description }}</a>
+{% elif t.expense_id %}<a class="link" href="{% url 'finance:expense' t.expense_id %}">{{ t.description }}</a>
+{% elif t.loan_id %}<a class="link" href="{% url 'finance:loan' t.loan_id %}">{{ t.description }}</a>
 {% else %}{{ t.description }}{% endif %}
 <span class="block text-xs text-muted">{{ t.get_kind_display }}{% if t.reference %} · {{ t.reference }}{% endif %}{% if t.is_void %} · void{% endif %}</span>

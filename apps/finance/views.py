@@ -10,9 +10,10 @@ from apps.core.http import (arender, avalidate, error_response, form_errors, for
                             service_errors, staff_required, wants_partial)
 from apps.core.permissions import ADMINS, MONEY
 
-from . import selectors, services
-from .forms import AccountForm, AdjustmentForm, ExpenseForm, OtherIncomeForm, TransferForm
-from .models import Account, Expense, Transaction, Transfer
+from . import loans, selectors, services
+from .forms import (AccountForm, AdjustmentForm, ExpenseForm, LoanForm, OtherIncomeForm, RepaymentForm, TransferForm,
+                    repay_dialog)
+from .models import Account, Expense, Loan, LoanRepayment, Transaction, Transfer
 
 
 def _date(text):
@@ -96,11 +97,14 @@ async def expense_create(request):
 
 @staff_required(*MONEY)
 async def expense_detail(request, pk):
-    expense = await aget_object_or_404(Expense.objects.select_related("account", "category", "project", "created_by"), pk=pk)
+    expense = await aget_object_or_404(Expense.objects.select_related("account", "category", "project", "created_by",
+                                                                      "loan"), pk=pk)
+    undo = ("What is owed back for the part they paid is voided too (only while none of it has been paid back)."
+            if expense.loan_id else "The money goes back into the account.")
     return await arender(request, "finance/expense_detail.html", {
         "expense": expense,
         "void_dialog": void_dialog("Void this expense", reverse("finance:expense-void", args=[pk]), "The expense")
-        | {"message": "The money goes back into the account. The expense stays on record, marked void."},
+        | {"message": f"{undo} The expense stays on record, marked void."},
     })
 
 
@@ -133,7 +137,7 @@ async def transfer_void(request, pk):
 @service_errors
 async def income_create(request):
     return await _service_form(request, form_class=OtherIncomeForm, action=services.record_other_income,
-                               title="Record other money in", submit="Record", cancel_url=reverse("finance:accounts"),
+                               title="Record other money in", initial={"project": request.GET.get("project")}, submit="Record", cancel_url=reverse("finance:accounts"),
                                success=lambda t: reverse("finance:account", args=[t.account_id]))
 
 
@@ -153,3 +157,77 @@ async def transaction_void(request, pk):
     txn = await aget_object_or_404(Transaction, pk=pk)
     await services.void_transaction(txn, request.actor)
     return redirect_with_message(request, reverse("finance:account", args=[txn.account_id]), "Transaction voided.")
+
+
+# ---------------------------------------------------------------- loans (services in loans.py)
+
+@staff_required(*MONEY)
+async def loan_list(request):
+    status, query = request.GET.get("status", "owing"), request.GET.get("q", "").strip()
+    template = "finance/partials/_loan_rows.html" if wants_partial(request, "loan-rows") else "finance/loan_list.html"
+    return await arender(request, template, {
+        "loans": await selectors.loans_for(status, query), "totals": await selectors.loan_totals(),
+        "status": status, "q": query, "tabs": [("owing", "Still owed"), ("all", "All")]})
+
+
+@staff_required(*MONEY)
+@service_errors
+async def loan_create(request):
+    return await _service_form(request, form_class=LoanForm, action=loans.record_loan, title="Record a loan or top-up",
+                               submit="Record", cancel_url=reverse("finance:loans"),
+                               subtitle="Money someone put into a company account: a loan, or a top-up so the account could "
+                                        "pay for something. If they paid a supplier straight from their own pocket, record "
+                                        "the expense instead and say who paid.",
+                               success=lambda loan: reverse("finance:loan", args=[loan.pk]))
+
+
+@staff_required(*MONEY)
+async def loan_detail(request, pk):
+    loan = await selectors.loan_detail(pk)
+    accounts = [a async for a in Account.objects.filter(is_active=True)]
+    return await arender(request, "finance/loan_detail.html", {
+        "loan": loan,
+        "repay_dialog": repay_dialog(loan, accounts) if loan.owed > 0 else None,
+        "void_dialog": void_dialog("Void this loan", reverse("finance:loan-void", args=[pk]), "The loan")
+        | {"message": "The money leaves the account again. The loan stays on record, marked void."},
+    })
+
+
+@staff_required(*MONEY)
+@require_POST
+@service_errors
+async def loan_repay(request, pk):
+    loan = await aget_object_or_404(Loan, pk=pk)
+    form = RepaymentForm(request.POST)
+    if not await avalidate(form):
+        return await error_response(request, form_errors(form))
+    await loans.repay_loan(loan, request.actor, **form.cleaned_data)
+    return redirect_with_message(request, reverse("finance:loan", args=[pk]),
+                                 "Reimbursement recorded." if loan.paid_costs_directly else "Repayment recorded.")
+
+
+@staff_required(*MONEY)
+@require_POST
+@service_errors
+async def loan_must_repay(request, pk):
+    must_repay = request.POST.get("must_repay") == "1"
+    await loans.set_must_repay(await aget_object_or_404(Loan, pk=pk), request.actor, must_repay=must_repay)
+    return redirect_with_message(request, reverse("finance:loan", args=[pk]),
+                                 "Marked as to be refunded." if must_repay else "Marked as not to be refunded.")
+
+
+@staff_required(*MONEY)
+@require_POST
+@service_errors
+async def loan_void(request, pk):
+    await loans.void_loan(await aget_object_or_404(Loan, pk=pk), request.actor, reason=request.POST.get("reason", ""))
+    return redirect_with_message(request, reverse("finance:loan", args=[pk]), "Loan voided.")
+
+
+@staff_required(*MONEY)
+@require_POST
+@service_errors
+async def repayment_void(request, pk):
+    repayment = await aget_object_or_404(LoanRepayment, pk=pk)
+    await loans.void_repayment(repayment, request.actor, reason=request.POST.get("reason", ""))
+    return redirect_with_message(request, reverse("finance:loan", args=[repayment.loan_id]), "Payment back voided.")

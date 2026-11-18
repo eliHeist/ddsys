@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}API keys{% endblock %}
+{% block content %}
+<c-page-header title="API keys" subtitle="Each key lets one product's app read that product's subscribers, invoices and payments.">
+  <c-ui.button size="sm" href="{{ docs_url }}" target="_blank" hx-boost="false">API docs</c-ui.button>
+  <c-ui.button variant="primary" size="sm" href="{% url 'core:api-key-new' %}">{% icon "plus" %} New key</c-ui.button>
+</c-page-header>
+<div id="form-errors" class="mb-3 text-sm empty:hidden" role="alert"></div>
+<c-section>
+  {% if keys %}
+    <c-ui.table>
+      <thead><tr><th>Name</th><th>Product</th><th>Key</th><th>Last used</th><th>Made</th><th></th></tr></thead>
+      <tbody>
+        {% for k in keys %}
+          <tr class="{% if not k.is_active %}text-muted{% endif %}">
+            <td class="font-medium">{{ k.name }}</td>
+            <td><a class="link" href="{% url 'projects:detail' k.product_id %}">{{ k.product.title }}</a></td>
+            <td><code class="text-xs">{{ k.masked }}</code></td>
+            <td>{{ k.last_used_at|date:"j M Y H:i"|default:"Never" }}</td>
+            <td>{{ k.created_at|date:"j M Y" }}{% if k.created_by %}<span class="block text-xs text-muted">{% firstof k.created_by.get_full_name k.created_by.email %}</span>{% endif %}</td>
+            <td class="text-right">
+              {% if k.is_active %}
+                <c-ui.button size="xs" variant="danger" :outlined="True" hx-post="{% url 'core:api-key-revoke' k.pk %}"
+                  hx-confirm="Revoke “{{ k.name }}”? Apps using it stop working immediately. This cannot be undone.">Revoke</c-ui.button>
+              {% else %}
+                <span class="text-xs">Revoked {{ k.revoked_at|date:"j M Y" }}</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </c-ui.table>
+  {% else %}
+    {% include "core/_ui.html#empty" with message="No keys yet. Make one for each product (and each server) that needs to read its records." %}
+  {% endif %}
+</c-section>
+{% endblock %}

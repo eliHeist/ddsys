@@ -4,7 +4,12 @@
     // cfg: { title, message, url, submit, danger, target, swap, fields: [{name, label, type, value, required, options}] }
     Alpine.data('actionDialog', () => ({
       open: false, busy: false, cfg: { fields: [] },
-      show(cfg) { this.cfg = { fields: [], target: 'body', swap: 'none', ...cfg }; this.open = true; },
+      show(cfg) {
+        // a field is optional unless it says required: true (an unset value would bind as required)
+        const fields = (cfg.fields || []).map((f) => ({ required: false, ...f }));
+        this.cfg = { target: 'body', swap: 'none', ...cfg, fields };
+        this.open = true;
+      },
       close() { this.open = false; this.busy = false; },
       async submit(form) {
         this.busy = true;
@@ -15,6 +20,21 @@
         this.busy = false;
         if (!box || !box.textContent.trim()) this.close();
       },
+    }));
+
+    // One project secret (projects/partials/_secret_row.html). The value is not in the page: it is fetched from
+    // `url` (a logged POST) when revealed or copied, and hidden again after 30 seconds.
+    Alpine.data('secret', (url) => ({
+      value: '', shown: false, timer: null,
+      fetchValue(action) { return fetchSecret(url, action); },
+      async toggle() {
+        if (this.shown) return this.hide();
+        try { this.value = await this.fetchValue('reveal'); } catch (e) { return; }
+        this.shown = true;
+        this.timer = setTimeout(() => this.hide(), 30000);
+      },
+      hide() { clearTimeout(this.timer); this.shown = false; this.value = ''; },
+      copy(message) { copyText(this.shown ? this.value : this.fetchValue('copy'), message); },
     }));
 
     // Quotation and invoice line editor (billing/partials/_line_editor.html). Rows post as repeated
@@ -30,6 +50,33 @@
       fmt(n) { return Math.round(n).toLocaleString('en-US'); },
     }));
   });
+
+  // Value of a project secret: POST so it is never cached or prefetched; the server logs who asked.
+  window.fetchSecret = async (url, action) => {
+    const response = await fetch(url, { method: 'POST', headers: { 'X-CSRFToken': window.CSRF }, body: new URLSearchParams({ action }) });
+    if (!response.ok) {
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Could not get the value (' + response.status + ').', variant: 'error' } }));
+      throw new Error(response.status);
+    }
+    return (await response.json()).value;
+  };
+
+  // Copy text, or the text a promise gives, to the clipboard. A ClipboardItem takes the promise, so the copy
+  // still counts as the click's (Safari refuses a copy made after an await otherwise).
+  window.copyText = async (text, message = 'Copied') => {
+    const toast = (message, variant) => window.dispatchEvent(new CustomEvent('toast', { detail: { message, variant } }));
+    try {
+      if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+        const blob = Promise.resolve(text).then((t) => new Blob([t], { type: 'text/plain' }));
+        await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]);
+      } else {
+        await navigator.clipboard.writeText(await text);
+      }
+      toast(message, 'success');
+    } catch (e) {
+      toast('Could not copy. The clipboard needs HTTPS (or localhost).', 'error');
+    }
+  };
 
   // Error fragments come back as 422: swap them in instead of discarding them.
   document.addEventListener('htmx:beforeSwap', (e) => {

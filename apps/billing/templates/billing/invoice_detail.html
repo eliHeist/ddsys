@@ -16,7 +16,10 @@
     {% endif %}
     <c-ui.button variant="danger" :outlined="True" hx-post="{% url 'billing:invoice-delete' doc.pk %}" hx-confirm="Delete this draft?">Delete draft</c-ui.button>
   {% else %}
-    <c-ui.button href="{% url 'documents:pdf' 'invoice' doc.pk %}" target="_blank" hx-boost="false">{% icon "download" %} PDF</c-ui.button>
+    <c-ui.button href="{% url 'documents:pdf' 'invoice' doc.pk %}" hx-boost="false" download>{% icon "download" %} PDF</c-ui.button>
+    {% if apply_dialog and can.money %}
+      <c-ui.button @click='$dispatch("open-dialog", {{ apply_dialog|jsattr }})'>{% icon "repeat" %} Apply credit</c-ui.button>
+    {% endif %}
     {% if payment_dialog and can.money %}
       <c-ui.button variant="primary" @click='$dispatch("open-dialog", {{ payment_dialog|jsattr }})'>{% icon "cash" %} Record payment</c-ui.button>
     {% endif %}
@@ -26,12 +29,18 @@
   {% endif %}
 </c-page-header>
 <div id="form-errors" class="mb-3 text-sm empty:hidden" role="alert"></div>
+{% if apply_dialog %}
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-box border border-accent/25 bg-[var(--color-accent-soft)] px-5 py-3 text-sm">
+    <p><span class="font-semibold text-fg">{{ doc.client }} has {{ credit|money:doc.currency }} on account</span> <span class="text-muted">from deposits or overpayments, not yet used on an invoice.</span></p>
+    {% if can.money %}<c-ui.button size="sm" variant="primary" @click='$dispatch("open-dialog", {{ apply_dialog|jsattr }})'>Apply to this invoice</c-ui.button>{% endif %}
+  </div>
+{% endif %}
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
   <div class="grid content-start gap-4">
     <c-section>{% include "billing/partials/_document_lines.html" %}</c-section>
     {% if not doc.is_draft %}
-      <c-section title="Payments" count="{{ doc.receipts.all|length }}">
-        {% include "billing/partials/_receipt_table.html" with receipts=doc.receipts.all hide_invoice=True %}
+      <c-section title="Payments" count="{{ doc.allocations.all|length }}">
+        {% include "billing/partials/_allocation_table.html" with allocations=doc.allocations.all %}
       </c-section>
     {% endif %}
   </div>

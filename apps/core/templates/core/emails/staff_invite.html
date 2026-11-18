@@ -1,0 +1,19 @@
+{# Plain, inline-styled HTML: email clients ignore stylesheets. Same content as staff_invite.txt. #}
+<div style="font-family: 'Inter Tight', Inter, Arial, sans-serif; font-size: 15px; line-height: 1.55; color: #0f172a; max-width: 520px;">
+  <p>Hello {{ name }},</p>
+  <p>{{ invited_by }} has added you to the {{ company }} system.</p>
+  <p style="margin: 24px 0;">
+    <a href="{{ set_password_url }}" style="background: #1f6f69; color: #ffffff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600;">Choose your password</a>
+  </p>
+  <p style="color: #64748b; font-size: 13px;">The link works once and expires in {{ days }} day{{ days|pluralize }}.</p>
+  <table style="border-collapse: collapse; margin: 16px 0; font-size: 14px;">
+    <tr><td style="padding: 4px 16px 4px 0; color: #64748b;">Sign in with</td><td style="padding: 4px 0;">{{ email }}</td></tr>
+    <tr><td style="padding: 4px 16px 4px 0; color: #64748b;">Role</td><td style="padding: 4px 0;">{{ role }}{% if can_do %}<br><span style="color: #64748b; font-size: 13px;">{{ can_do|capfirst }}</span>{% endif %}</td></tr>
+    {% if title %}<tr><td style="padding: 4px 16px 4px 0; color: #64748b;">Job title</td><td style="padding: 4px 0;">{{ title }}</td></tr>{% endif %}
+    {% if is_director %}<tr><td style="padding: 4px 16px 4px 0; color: #64748b;">Director</td><td style="padding: 4px 0;">Yes</td></tr>{% endif %}
+    <tr><td style="padding: 4px 16px 4px 0; color: #64748b;">Sign in at</td><td style="padding: 4px 0;"><a href="{{ sign_in_url }}" style="color: #1f6f69;">{{ sign_in_url }}</a></td></tr>
+  </table>
+  <p>After signing in, please <a href="{{ security_url }}" style="color: #1f6f69;">turn on two-factor sign-in</a> (an authenticator app or a passkey).</p>
+  <p style="color: #64748b; font-size: 13px;">If the link has expired, use "Forgot password?" on the sign-in page, or ask an admin to send a new one.</p>
+  <p>{{ company }}</p>
+</div>

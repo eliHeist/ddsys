@@ -1,0 +1,28 @@
+{% load ui %}
+{# What paid an invoice: payments made on it and credit applied to it (billing.Allocation), on the invoice page. #}
+{% if allocations %}
+  <c-ui.table>
+    <thead><tr><th>Receipt</th><th>Paid</th><th>Into</th><th class="text-right">Amount</th>{% if can.money and not doc.is_void %}<th></th>{% endif %}</tr></thead>
+    <tbody>
+      {% for a in allocations %}
+        <tr>
+          <td>
+            <a class="link" href="{% url 'billing:receipt' a.receipt_id %}">{{ a.receipt.number }}</a>
+            {% if a.is_from_deposit %}<span class="block text-xs text-muted">Credit applied {{ a.date|date:"d/m/Y" }}</span>{% endif %}
+          </td>
+          <td>{{ a.receipt.date|date:"d/m/Y" }}</td>
+          <td>{{ a.receipt.account }}{% if a.receipt.reference %}<span class="block text-xs text-muted">{{ a.receipt.reference }}</span>{% endif %}</td>
+          <td class="text-right tabular-nums">{{ a.amount|number }}</td>
+          {% if can.money and not doc.is_void %}
+            <td class="w-0 text-right">
+              <c-ui.button variant="ghost" size="sm"
+                @click="$dispatch('open-dialog', { title: 'Take back {{ a.amount|number }} from {{ doc.number|escapejs }}?', message: '{{ a.receipt.number|escapejs }} keeps the money as {{ doc.client.name|escapejs }}\'s credit, and the invoice owes it again. Use this when credit went to the wrong invoice; to undo money that never came, void the receipt instead.', url: '{% url 'billing:allocation-remove' a.pk %}', submit: 'Take back', danger: true })">Take back</c-ui.button>
+            </td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </c-ui.table>
+{% else %}
+  {% include "core/_ui.html#empty" with message="No payments yet." %}
+{% endif %}

@@ -1,8 +1,12 @@
 from django.shortcuts import aget_object_or_404
 from django.urls import reverse
 
+from apps.billing import selectors as billing
+from apps.billing.forms import deposit_dialog
 from apps.billing.models import Invoice, Quotation
 from apps.core.http import arender, form_page, paginate, staff_required, wants_partial
+from apps.finance.models import Account
+from apps.core.permissions import MONEY
 from apps.projects.models import Project
 
 from . import selectors
@@ -22,13 +26,20 @@ async def client_list(request):
 async def client_detail(request, pk):
     client = await aget_object_or_404(Client, pk=pk)
     rows, balance = await selectors.statement(client)
-    return await arender(request, "clients/client_detail.html", {
-        "client": client,
-        "projects": [p async for p in Project.objects.filter(client=client)],
+    projects = [p async for p in Project.objects.filter(client=client)]
+    quotations = [q async for q in Quotation.objects.filter(client=client)[:20]]
+    credit_receipts = await billing.credit_receipts(client.pk)
+    context = {
+        "client": client, "projects": projects, "quotations": quotations,
         "invoices": [i async for i in Invoice.objects.filter(client=client)[:20]],
-        "quotations": [q async for q in Quotation.objects.filter(client=client)[:20]],
-        "statement": rows, "balance": balance,
-    })
+        "statement": rows, "owing": await selectors.owing(client), "credit_receipts": credit_receipts,
+        "credit": sum((r.credit for r in credit_receipts), 0),
+    }
+    if request.actor.is_superuser or request.staff.role in MONEY:
+        accounts = [a async for a in Account.objects.filter(is_active=True)]
+        depositable = [q for q in quotations if q.status in (Quotation.Status.ISSUED, Quotation.Status.ACCEPTED)]
+        context["deposit_dialog"] = deposit_dialog(client, accounts, quotations=depositable, projects=projects)
+    return await arender(request, "clients/client_detail.html", context)
 
 
 @staff_required()

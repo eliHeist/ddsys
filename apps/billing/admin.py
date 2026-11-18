@@ -1,7 +1,7 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import Invoice, InvoiceLine, Quotation, QuotationLine, Receipt
+from .models import Allocation, Invoice, InvoiceLine, Quotation, QuotationLine, Receipt
 
 
 class InvoiceLineInline(admin.TabularInline):
@@ -33,9 +33,22 @@ class QuotationAdmin(SimpleHistoryAdmin):
     readonly_fields = ("number", "status", "total", "issued_at", "voided_at")
 
 
+class AllocationInline(admin.TabularInline):
+    model = Allocation
+    fk_name = "receipt"
+    extra = 0
+    can_delete = False
+    readonly_fields = ("invoice", "amount", "date", "created_by")
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Receipt)
 class ReceiptAdmin(SimpleHistoryAdmin):
-    list_display = ("number", "invoice", "date", "amount", "account", "status")
+    list_display = ("number", "client", "invoice", "date", "amount", "account", "status")
     list_filter = ("status", "account")
-    search_fields = ("number", "invoice__number", "received_from", "reference")
-    readonly_fields = ("number", "status", "amount", "invoice", "account", "invoice_total", "previously_paid")
+    search_fields = ("number", "invoice__number", "client__name", "received_from", "reference")
+    readonly_fields = ("number", "status", "amount", "client", "invoice", "quotation", "project", "account",
+                       "invoice_total", "previously_paid")
+    inlines = (AllocationInline,)

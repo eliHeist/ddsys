@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}API key made{% endblock %}
+{% block content %}
+<div class="mx-auto grid max-w-2xl gap-4">
+  <c-page-header title="Key made: {{ key.name }}" back_url="{% url 'core:api-keys' %}" back_label="API keys"
+    subtitle="Copy it now. It is not stored and will not be shown again; if it is lost, revoke it and make a new one." />
+  <c-section title="The key" :padded="True">
+    <div x-data="{ copied: false }" class="grid gap-3">
+      <code class="block break-all rounded-control bg-ink-100 p-3 text-sm dark:bg-ink-800" x-ref="key">{{ raw_key }}</code>
+      <div><c-ui.button size="sm" @click="navigator.clipboard.writeText($refs.key.textContent); copied = true" x-text="copied ? 'Copied' : 'Copy key'">Copy key</c-ui.button></div>
+    </div>
+  </c-section>
+  <c-section title="Using it" :padded="True">
+    <p class="mb-2 text-sm">Keep it in the {{ key.product.title }} server's settings (an environment variable), never in a browser or mobile app. Send it with every request:</p>
+    <pre class="overflow-x-auto rounded-control bg-ink-100 p-3 text-xs dark:bg-ink-800">curl -H "Authorization: Bearer {{ raw_key }}" \
+  {{ request.scheme }}://{{ request.get_host }}/api/v1/customers/&lt;their-id-in-your-app&gt;/status</pre>
+  </c-section>
+</div>
+{% endblock %}

@@ -59,7 +59,7 @@ def receipt(rct):
     pdf.font(9, color=MUTED)
     pdf.cell(0, 7, "AMOUNT RECEIVED", fill=True, align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.font(20, bold=True)
-    pdf.cell(0, 11, f"{rct.invoice.currency} {num(rct.amount)}", fill=True, align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 11, f"{rct.currency} {num(rct.amount)}", fill=True, align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(5)
 
     pdf.font(10, bold=True)
@@ -74,11 +74,26 @@ def receipt(rct):
     pdf.ln(4)
 
     w = pdf.width
-    pdf.grid(("INVOICE REF", "PAYMENT METHOD", "TRANSACTION ID"),
-             [(rct.invoice.number, rct.account.name, rct.reference or "-")], (w * 0.3, w * 0.35, w * 0.35), ("L", "L", "L"))
-    pdf.ln(4)
-    pdf.totals([("Invoice Total", num(rct.invoice_total), False), ("Previously Paid", num(rct.previously_paid), False),
-                ("This Payment", num(rct.amount), False), ("Balance Due", num(rct.balance_due), True)])
+    if rct.invoice_id:
+        pdf.grid(("INVOICE REF", "PAYMENT METHOD", "TRANSACTION ID"),
+                 [(rct.invoice.number, rct.account.name, rct.reference or "-")], (w * 0.3, w * 0.35, w * 0.35), ("L", "L", "L"))
+        pdf.ln(4)
+        rows = [("Invoice Total", num(rct.invoice_total), False), ("Previously Paid", num(rct.previously_paid), False),
+                ("This Payment", num(rct.amount), False), ("Balance Due", num(rct.balance_due), True)]
+        if rct.kept_as_credit:
+            rows.append(("Held as Credit", num(rct.kept_as_credit), False))
+        pdf.totals(rows)
+    else:
+        # a deposit: no invoice yet, so the money is held as the client's credit towards it
+        towards = rct.quotation.number if rct.quotation_id else (rct.project.title if rct.project_id else "On account")
+        pdf.grid(("DEPOSIT TOWARDS", "PAYMENT METHOD", "TRANSACTION ID"),
+                 [(towards, rct.account.name, rct.reference or "-")], (w * 0.3, w * 0.35, w * 0.35), ("L", "L", "L"))
+        pdf.ln(4)
+        pdf.totals([("Deposit Received", num(rct.amount), True)])
+        pdf.ln(1)
+        pdf.font(9, color=MUTED)
+        pdf.multi_cell(0, 4.5, "Held as credit and taken off the invoice when it is issued.", align="R",
+                       new_x="LMARGIN", new_y="NEXT")
     pdf.ln(4)
     pdf.payment_methods(Account.objects.all())
     terms = [t.strip() for t in company.receipt_terms.splitlines() if t.strip()]
@@ -95,13 +110,16 @@ def statement(client, rows, balance):
     from django.utils import timezone
     company = CompanySettings.load()
     pdf = DakdotPDF(company, f"Statement {client.name}")
+    in_credit = balance < 0
+    label, shown = ("In Credit", num(-balance)) if in_credit else ("Balance Due", num(balance))
     pdf.heading_block([("Date:", _date(timezone.localdate()), False), ("Statement For:", client.name, True)],
-                      "STATEMENT", [("Balance Due", f"UGX {num(balance)}")])
+                      "STATEMENT", [(label, f"UGX {shown}")])
     w = pdf.width
     pdf.grid(("DATE", "REFERENCE", "DETAILS", "BILLED", "PAID", "BALANCE"),
              [(_date(r["date"]), r["ref"], r["what"][:38], num(r["debit"]) if r["debit"] else "",
-               num(r["credit"]) if r["credit"] else "", num(r["balance"])) for r in rows]
-             + [("", "", "Balance due", "", "", num(balance), True)],
+               num(r["credit"]) if r["credit"] else "",
+               f'{num(-r["balance"])} CR' if r["balance"] < 0 else num(r["balance"])) for r in rows]
+             + [("", "", label, "", "", shown, True)],
              (w * 0.13, w * 0.17, w * 0.28, w * 0.14, w * 0.14, w * 0.14), ("L", "L", "L", "R", "R", "R"))
     pdf.ln(6)
     pdf.payment_methods(Account.objects.all())

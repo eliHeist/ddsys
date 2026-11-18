@@ -1,0 +1,19 @@
+{% load ui %}
+{# Header control for the colour scheme: System / Auto / Light / Dark. Needs <c-theme.head /> in <head>. #}
+<div x-data="{ mode: window.theme.get() }" @theme-change.window="mode = $event.detail">
+    <c-ui.dropdown align="end" min_width="13rem">
+        <c-slot name="trigger">
+            <c-ui.button variant="ghost" size="icon" aria-label="Colour scheme">
+                <span x-show="mode === 'system'">{% icon "monitor" "size-5" %}</span>
+                <span x-show="mode === 'auto'" x-cloak>{% icon "clock" "size-5" %}</span>
+                <span x-show="mode === 'light'" x-cloak>{% icon "sun" "size-5" %}</span>
+                <span x-show="mode === 'dark'" x-cloak>{% icon "moon" "size-5" %}</span>
+            </c-ui.button>
+        </c-slot>
+        <div class="px-4 pt-2 pb-1 text-xs font-medium text-muted">Appearance</div>
+        {% include "core/partials/_theme_option.html" with value="system" label="System" hint="Match this device" icon_name="monitor" %}
+        {% include "core/partials/_theme_option.html" with value="auto" label="Auto" hint="Dark from 7pm to 7am" icon_name="clock" %}
+        {% include "core/partials/_theme_option.html" with value="light" label="Light" hint="Always light" icon_name="sun" %}
+        {% include "core/partials/_theme_option.html" with value="dark" label="Dark" hint="Always dark" icon_name="moon" %}
+    </c-ui.dropdown>
+</div>

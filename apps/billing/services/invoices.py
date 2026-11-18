@@ -8,6 +8,7 @@ from apps.core.models import CompanySettings
 from apps.core.permissions import EVERYONE, MONEY, require_role
 
 from .common import assert_draft, assert_project_matches, days_from, replace_lines, today
+from .receipts import auto_apply, release
 
 Status = Invoice.Status
 
@@ -45,12 +46,9 @@ def update_invoice(invoice, by, *, client, lines, project=None, notes="", terms=
     return invoice
 
 
-@service
-@transaction.atomic
-def issue_invoice(invoice, by):
-    """Date it today, give it its number (INV + today) and freeze it. From now on it can be paid."""
-    require_role(by, *MONEY)
-    invoice = _lock(invoice)
+def issue(invoice, by=None):
+    """Date a locked draft today, number it and freeze it, then apply any deposit made for its quotation or project.
+    No permission check: for services that already did one (issue_invoice) or that run unattended (subscriptions)."""
     assert_draft(invoice)
     if not invoice.lines.exists() or invoice.total <= 0:
         raise ValidationError("An invoice needs at least one line and a total above 0.")
@@ -59,25 +57,35 @@ def issue_invoice(invoice, by):
         invoice.due_date = days_from(invoice.date, CompanySettings.load().invoice_due_days)
     invoice.status, invoice.issued_at = Status.ISSUED, timezone.now()
     invoice.save()
+    auto_apply(invoice, by)
     return invoice
 
 
 @service
 @transaction.atomic
+def issue_invoice(invoice, by):
+    """Date it today, give it its number (INV + today) and freeze it. From now on it can be paid."""
+    require_role(by, *MONEY)
+    return issue(_lock(invoice), by)
+
+
+@service
+@transaction.atomic
 def void_invoice(invoice, by, *, reason):
-    """Cancel an issued invoice. Its number stays used. Payments must be voided first, so money is never lost."""
+    """Cancel an issued invoice. Its number stays used. Whatever was paid towards it is not lost: it goes back to
+    the client as credit, ready for the invoice that replaces it."""
     require_role(by, *MONEY)
     invoice = _lock(invoice)
     if invoice.is_draft:
         raise ValidationError("Delete a draft instead of voiding it.")
     if invoice.is_void:
         raise ValidationError(f"{invoice.label} is already void.")
-    if invoice.receipts.filter(status="valid").exists():
-        raise ValidationError(f"{invoice.label} has payments. Void its receipts first.")
     if not (reason or "").strip():
         raise ValidationError("Say why it is being voided.")
+    release(invoice)
     invoice.status, invoice.voided_at, invoice.void_reason = Status.VOID, timezone.now(), reason.strip()
-    invoice.save(update_fields=["status", "voided_at", "void_reason", "updated_at"])
+    invoice.amount_paid = 0
+    invoice.save(update_fields=["status", "voided_at", "void_reason", "amount_paid", "updated_at"])
     return invoice
 
 

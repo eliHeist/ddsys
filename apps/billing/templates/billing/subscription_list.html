@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Subscriptions{% endblock %}
+{% block content %}
+<c-page-header title="Subscriptions" subtitle="Clients billed every period: product plans, hosting, retainers.">
+  {% if can.money %}<c-ui.button variant="primary" size="sm" href="{% url 'billing:subscription-new' %}">{% icon "plus" %} New subscription</c-ui.button>{% endif %}
+</c-page-header>
+<c-list-toolbar target="subscription-rows" q="{{ q }}" status="{{ status }}" placeholder="Search client, plan, product, ID"
+  :tabs="[('active', 'Active'), ('paused', 'Paused'), ('ended', 'Ended'), ('all', 'All')]" />
+<c-section>{% include "billing/partials/_subscription_rows.html" %}</c-section>
+{% endblock %}

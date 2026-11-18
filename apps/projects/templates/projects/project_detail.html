@@ -2,42 +2,57 @@
 {% load ui %}
 {% block title %}{{ project.title }}{% endblock %}
 {% block content %}
-<c-page-header title="{{ project.title }}" back_url="{% url 'projects:list' %}" back_label="Projects">
+{# One page for the three kinds; the summary and sections change with project.kind. #}
+{% if project.is_product %}{% url 'projects:products' as back_url %}{% else %}{% url 'projects:list' as back_url %}{% endif %}
+<c-page-header title="{{ project.title }}" back_url="{{ back_url }}" back_label="{% if project.is_product %}Products{% else %}Projects{% endif %}">
   <c-slot name="meta">
     <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+      <c-ui.badge color="ink">{{ project.get_kind_display }}</c-ui.badge>
       <c-status status="{{ project.status }}" label="{{ project.get_status_display }}" />
-      <a class="underline" href="{% url 'clients:detail' project.client_id %}">{{ project.client }}</a>
+      {% if project.client %}<a class="link" href="{% url 'clients:detail' project.client_id %}">{{ project.client }}</a>{% endif %}
+      {% if project.code %}<code class="text-xs">{{ project.code }}</code>{% endif %}
       {% if project.lead %}· led by {% firstof project.lead.get_full_name project.lead.email %}{% endif %}
       {% if project.due_date %}· due {{ project.due_date|date:"j M Y" }}{% endif %}
     </div>
   </c-slot>
   <c-ui.button href="{% url 'projects:edit' project.pk %}">{% icon "edit" %} Edit</c-ui.button>
-  <c-ui.button href="{% url 'billing:quotation-new' %}?project={{ project.pk }}">{% icon "plus" %} Quotation</c-ui.button>
-  <c-ui.button variant="primary" href="{% url 'billing:invoice-new' %}?project={{ project.pk }}">{% icon "plus" %} Invoice</c-ui.button>
+  {% include "projects/partials/_detail_actions.html" %}
 </c-page-header>
-<div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-  {% include "core/_ui.html#stat" with label="Invoiced" value=money.invoiced|money %}
-  {% include "core/_ui.html#stat" with label="Received" value=money.received|money %}
-  {% include "core/_ui.html#stat" with label="Still owed" value=money.owing|money %}
-  {% include "core/_ui.html#stat" with label="Spent" value=money.spent|money %}
-  {% include "core/_ui.html#stat" with label="Profit (invoiced − spent)" value=money.profit|money %}
-</div>
+
+{% include "projects/partials/_money_summary.html" %}
+
 <div class="grid gap-4 lg:grid-cols-2">
-  <c-section title="Invoices">
-    {% include "clients/partials/_document_list.html" with docs=invoices url_name="billing:invoice" empty="No invoices yet." %}
-  </c-section>
-  <c-section title="Quotations">
-    {% include "clients/partials/_document_list.html" with docs=quotations url_name="billing:quotation" domain="quote" empty="No quotations yet." %}
-  </c-section>
-  <c-section title="Expenses">
+  {% if project.is_product or subscriptions %}
+    <c-section title="{% if project.is_product %}Subscribers{% else %}Subscriptions{% endif %}" count="{{ subscriptions|length }}" class="lg:col-span-2">
+      {% if subscriptions %}
+        {% include "billing/partials/_subscription_rows.html" with page_obj=subscriptions %}
+      {% else %}
+        {% include "core/_ui.html#empty" with message="No subscribers yet." %}
+      {% endif %}
+    </c-section>
+  {% endif %}
+  {% if not project.is_internal or invoices %}
+    <c-section title="Invoices">
+      {% include "clients/partials/_document_list.html" with docs=invoices url_name="billing:invoice" empty="No invoices yet." %}
+    </c-section>
+  {% endif %}
+  {% if project.kind == "client" or quotations %}
+    <c-section title="Quotations">
+      {% include "clients/partials/_document_list.html" with docs=quotations url_name="billing:quotation" domain="quote" empty="No quotations yet." %}
+    </c-section>
+  {% endif %}
+  {% if project.is_product or other_income %}
+    <c-section title="Other income">
+      {% include "projects/partials/_other_income.html" %}
+    </c-section>
+  {% endif %}
+  <c-section title="{% if project.is_internal %}Costs{% else %}Expenses{% endif %}">
     <c-slot name="actions">{% if can.money %}<c-ui.button size="sm" href="{% url 'finance:expense-new' %}?project={{ project.pk }}">{% icon "plus" %} Expense</c-ui.button>{% endif %}</c-slot>
     {% include "finance/partials/_expense_table.html" with expenses=expenses hide_project=True %}
   </c-section>
-  {% if project.description or project.budget %}
-    <c-section title="About" :padded="True">
-      {% if project.budget %}<p class="text-sm"><span class="text-muted">Budget:</span> {{ project.budget|money }}</p>{% endif %}
-      {% if project.description %}<p class="mt-2 whitespace-pre-line text-sm">{{ project.description }}</p>{% endif %}
-    </c-section>
+  {% include "projects/partials/_secrets.html" %}
+  {% if project.description %}
+    <c-section title="About" :padded="True"><p class="whitespace-pre-line text-sm">{{ project.description }}</p></c-section>
   {% endif %}
 </div>
 {% endblock %}

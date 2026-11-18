@@ -1,5 +1,5 @@
-"""The Dakdot document look, drawn with fpdf2: centred logo and tagline, a teal accent, DM Sans, and the
-contact line at the foot of every page. Layouts (layouts.py) use these helpers and never touch fpdf2 directly
+"""The Dakdot document look, drawn with fpdf2: the centred logo, a teal accent, Inter Tight (the app's font), narrow
+margins, and the contact line at the foot of every page. Layouts (layouts.py) use these helpers and never touch fpdf2 directly
 for styling, so restyling happens here."""
 
 from decimal import Decimal
@@ -8,7 +8,12 @@ from pathlib import Path
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
-FONTS = Path(__file__).resolve().parent / "fonts" / "dmsans"
+HERE = Path(__file__).resolve().parent
+FONTS = HERE / "fonts" / "intertight"
+FONT = "InterTight"
+LOGO = HERE / "assets" / "dakdot-logo.svg"  # includes "Digital Solutions. Design Excellence."
+LOGO_WIDTH = 46  # mm; the logo is 172 x 79, so about 21 mm tall
+MARGIN_X, MARGIN_TOP, MARGIN_BOTTOM = 9, 7, 14
 ACCENT = (98, 153, 150)      # #629996, the teal on the paper invoices
 ACCENT_SOFT = (221, 232, 232)
 INK = (24, 24, 27)
@@ -26,10 +31,10 @@ class DakdotPDF(FPDF):
     def __init__(self, company, title):
         super().__init__(format="A4", unit="mm")
         self.company, self.doc_title = company, title
-        self.add_font("DMSans", "", FONTS / "DMSans-Regular.ttf")
-        self.add_font("DMSans", "B", FONTS / "DMSans-Bold.ttf")
-        self.set_margins(18, 14, 18)
-        self.set_auto_page_break(True, margin=22)
+        self.add_font(FONT, "", FONTS / "InterTight-Regular.ttf")
+        self.add_font(FONT, "B", FONTS / "InterTight-Bold.ttf")
+        self.set_margins(MARGIN_X, MARGIN_TOP, MARGIN_X)
+        self.set_auto_page_break(True, margin=MARGIN_BOTTOM)
         self.set_title(title)
         self.set_author(company.legal_name)
         self.set_creator(company.name)
@@ -38,47 +43,38 @@ class DakdotPDF(FPDF):
 
     # ---------------------------------------------------------------- page furniture
     def header(self):
+        """The logo, centred, on the first page only. A logo uploaded in the company settings replaces the bundled
+        one; the bundled SVG already carries the tagline, so no tagline text is printed."""
         if self.page_no() > 1:
-            self.set_y(10)
+            self.set_y(MARGIN_TOP)
             return
-        if self.company.logo:
-            try:
-                self.image(self.company.logo.path, x=(self.w - 50) / 2, y=12, w=50)
-                self.set_y(32)
-            except (OSError, ValueError):
-                self._wordmark()
-        else:
-            self._wordmark()
-        self.font(8.5)
-        for line in [part.strip() + "." for part in self.company.tagline.split(".") if part.strip()]:
-            self.cell(0, 4, line, align="C", **NEXT)
-        self.ln(8)
-
-    def _wordmark(self):
-        self.set_y(12)
-        self.font(30, bold=True)
-        self.cell(0, 12, self.company.name.split()[0].lower(), align="C", **NEXT)
+        x, top = (self.w - LOGO_WIDTH) / 2, MARGIN_TOP
+        try:
+            self.image(self.company.logo.path if self.company.logo else LOGO, x=x, y=top, w=LOGO_WIDTH)
+        except (OSError, ValueError):
+            self.image(LOGO, x=x, y=top, w=LOGO_WIDTH)
+        self.set_y(top + LOGO_WIDTH * 79 / 172 + 6)
 
     def footer(self):
         if self.void:
             self._stamp("VOID")
-        self.set_y(-15)
+        self.set_y(-10)
         self.font(8.5, color=MUTED)
         self.cell(0, 5, self.company.footer_line, align="C")
         if self.page_no() > 1:
-            self.set_y(-15)
+            self.set_y(-10)
             self.cell(0, 5, f"{self.page_no()}/{{nb}}", align="R")
 
     def _stamp(self, text):
         with self.rotation(30, self.w / 2, self.h / 2):
             self.set_text_color(220, 60, 60)
-            self.set_font("DMSans", "B", 90)
+            self.set_font(FONT, "B", 90)
             with self.local_context(fill_opacity=0.15, stroke_opacity=0.15):
                 self.text(self.w / 2 - 45, self.h / 2 + 10, text)
 
     # ---------------------------------------------------------------- text helpers
     def font(self, size=10, bold=False, color=INK):
-        self.set_font("DMSans", "B" if bold else "", size)
+        self.set_font(FONT, "B" if bold else "", size)
         self.set_text_color(*color)
 
     @property

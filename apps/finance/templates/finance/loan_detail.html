@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{{ loan.title }}{% endblock %}
+{% block content %}
+<c-page-header title="{{ loan.title }}" back_url="{% url 'finance:loans' %}" back_label="Owed back">
+  <c-slot name="meta">
+    <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+      {% if loan.is_void %}<c-status status="void" label="Void" />
+      {% elif not loan.must_repay %}<c-ui.badge color="ink">Not refundable</c-ui.badge>
+      {% elif loan.owed %}<c-status status="partial" label="{% if loan.repaid %}Partly paid back{% else %}Owed{% endif %}" />
+      {% else %}<c-status status="paid" label="Paid back" />{% endif %}
+      <span>{{ loan.lender_kind }}</span>
+    </div>
+  </c-slot>
+  {% if not loan.is_void %}
+    {% if repay_dialog %}<c-ui.button variant="primary" @click='$dispatch("open-dialog", {{ repay_dialog|jsattr }})'>{% icon "cash" %} {% if loan.paid_costs_directly %}Reimburse{% else %}Repay{% endif %}</c-ui.button>{% endif %}
+    <c-ui.button hx-post="{% url 'finance:loan-must-repay' loan.pk %}" hx-vals='{"must_repay": "{{ loan.must_repay|yesno:"0,1" }}"}'
+      hx-confirm="{% if loan.must_repay %}Mark this as not to be refunded? Nothing will show as owed.{% else %}Mark this as to be refunded?{% endif %}">
+      {% if loan.must_repay %}Not to be refunded{% else %}To be refunded{% endif %}</c-ui.button>
+    {% if not loan.expense_rows %}<c-ui.button variant="danger" :outlined="True" @click='$dispatch("open-dialog", {{ void_dialog|jsattr }})'>Void</c-ui.button>{% endif %}
+  {% endif %}
+</c-page-header>
+<div id="form-errors" class="mb-3 text-sm empty:hidden" role="alert"></div>
+<div class="mb-4 grid gap-3 sm:grid-cols-3">
+  {% include "core/_ui.html#stat" with label=loan.paid_costs_directly|yesno:"They paid,Lent" value=loan.amount|money %}
+  {% include "core/_ui.html#stat" with label="Paid back" value=loan.repaid|money %}
+  {% include "core/_ui.html#stat" with label="Still owed" value=loan.owed|money %}
+</div>
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+  <div class="grid content-start gap-4">
+    <c-section title="{% if loan.paid_costs_directly %}Reimbursements{% else %}Repayments{% endif %}" count="{{ loan.repayment_rows|length }}">
+      {% include "finance/partials/_repayment_table.html" with repayments=loan.repayment_rows %}
+    </c-section>
+    {% if loan.expense_rows %}
+      <c-section title="The expense they paid for">
+        {% include "finance/partials/_expense_table.html" with expenses=loan.expense_rows %}
+      </c-section>
+    {% endif %}
+  </div>
+  <c-section title="Details" :padded="True">
+    <dl class="grid gap-2 text-sm">
+      <div class="flex justify-between gap-3"><dt class="text-muted">From</dt><dd class="text-right">{{ loan.lender_name }}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">Date</dt><dd>{{ loan.date|date:"d/m/Y" }}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">Received</dt><dd class="text-right">{% if loan.account_id %}<a class="link" href="{% url 'finance:account' loan.account_id %}">Into {{ loan.account }}</a>{% else %}Paid a company cost from their own money{% endif %}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">To be refunded</dt><dd>{{ loan.must_repay|yesno:"Yes,No" }}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">Reference</dt><dd>{{ loan.reference|default:"-" }}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">Recorded by</dt><dd>{% firstof loan.created_by.get_full_name loan.created_by.email "-" %}</dd></div>
+      <div class="grid gap-1"><dt class="text-muted">For</dt><dd>{{ loan.purpose }}</dd></div>
+      {% if loan.is_void %}<div class="grid gap-1 rounded-control bg-red-50 p-2 text-red-800 dark:bg-red-950/30 dark:text-red-200"><dt class="font-medium">Voided {{ loan.voided_at|date:"j M Y" }}</dt><dd>{{ loan.void_reason }}</dd></div>{% endif %}
+    </dl>
+  </c-section>
+</div>
+{% endblock %}

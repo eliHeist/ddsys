@@ -2,6 +2,7 @@
 set -e
 
 python manage.py migrate
+python manage.py createcachetable  # the shared cache table (dbcache); does nothing if it exists
 python manage.py seed_basics
 
 # First admin: set DJANGO_SUPERUSER_EMAIL and DJANGO_SUPERUSER_PASSWORD on the first deploy.

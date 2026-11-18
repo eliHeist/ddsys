@@ -4,7 +4,7 @@
 {# The page for every simple create/edit form (customers, vehicles, parts, suppliers, staff, branch: apps.core.http.form_page). #}
 {# Widgets are Django's own, given the kit's control look by apps.core.forms.Styled. #}
 <div class="mx-auto max-w-2xl">
-  <c-page-header title="{{ title }}" back_url="{{ cancel_url }}" back_label="Back" />
+  <c-page-header title="{{ title }}" subtitle="{{ subtitle }}" back_url="{{ cancel_url }}" back_label="Back" />
   <form method="post" {% if form.is_multipart %}hx-encoding="multipart/form-data"{% endif %}>
     {% csrf_token %}
     <c-ui.card class="grid gap-4">

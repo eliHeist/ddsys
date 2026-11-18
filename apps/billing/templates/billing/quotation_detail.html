@@ -14,10 +14,13 @@
     <c-ui.button variant="primary" hx-post="{% url 'billing:quotation-issue' doc.pk %}" hx-confirm="Issue this quotation? It gets today's date and its number, and can no longer be changed.">{% icon "send" %} Issue</c-ui.button>
     <c-ui.button variant="danger" :outlined="True" hx-post="{% url 'billing:quotation-delete' doc.pk %}" hx-confirm="Delete this draft?">Delete draft</c-ui.button>
   {% else %}
-    <c-ui.button href="{% url 'documents:pdf' 'quotation' doc.pk %}" target="_blank" hx-boost="false">{% icon "download" %} PDF</c-ui.button>
+    <c-ui.button href="{% url 'documents:pdf' 'quotation' doc.pk %}" hx-boost="false" download>{% icon "download" %} PDF</c-ui.button>
     {% if doc.status == "issued" %}
       <c-ui.button hx-post="{% url 'billing:quotation-decline' doc.pk %}" hx-confirm="Mark this quotation as declined by the client?">Declined</c-ui.button>
       <c-ui.button hx-post="{% url 'billing:quotation-accept' doc.pk %}">{% icon "check" %} Accepted</c-ui.button>
+    {% endif %}
+    {% if deposit_dialog %}
+      <c-ui.button @click='$dispatch("open-dialog", {{ deposit_dialog|jsattr }})'>{% icon "cash" %} Record deposit</c-ui.button>
     {% endif %}
     {% if invoice %}
       <c-ui.button variant="primary" href="{% url 'billing:invoice' invoice.pk %}">{% icon "receipt" %} {{ invoice.label }}</c-ui.button>
@@ -31,7 +34,14 @@
 </c-page-header>
 <div id="form-errors" class="mb-3 text-sm empty:hidden" role="alert"></div>
 <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-  <c-section>{% include "billing/partials/_document_lines.html" %}</c-section>
+  <div class="grid content-start gap-4">
+    <c-section>{% include "billing/partials/_document_lines.html" %}</c-section>
+    {% if deposits %}
+      <c-section title="Deposits" count="{{ deposits|length }}" subtitle="Paid before the invoice. Applied to it automatically when it is issued.">
+        {% include "billing/partials/_deposit_list.html" %}
+      </c-section>
+    {% endif %}
+  </div>
   <aside class="grid content-start gap-4">{% include "billing/partials/_document_aside.html" %}</aside>
 </div>
 {% endblock %}

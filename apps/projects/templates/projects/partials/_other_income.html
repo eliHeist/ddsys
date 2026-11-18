@@ -1,0 +1,13 @@
+{% load ui %}
+{% if other_income %}
+  <ul class="divide-y divide-box-border">
+    {% for t in other_income %}
+      <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm {% if t.is_void %}text-muted line-through{% endif %}">
+        <div>{{ t.description }}<span class="block text-xs text-muted">{{ t.date|date:"d/m/Y" }} · {{ t.account }}{% if t.reference %} · {{ t.reference }}{% endif %}</span></div>
+        <span class="tabular-nums">{{ t.amount|number }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  {% include "core/_ui.html#empty" with message="Money the product earns without an invoice (direct sales, payouts) shows here." %}
+{% endif %}

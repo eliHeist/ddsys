@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+    // relative asset URLs (fonts) in the built CSS, so they resolve under Django's /static/
+    base: './',
     plugins: [
         tailwindcss(),
     ],

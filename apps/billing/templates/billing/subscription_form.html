@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<c-page-header title="{{ title }}" back_url="{{ cancel_url }}" back_label="Back"
+  subtitle="The lines go on every invoice it makes. Changes apply from the next invoice." />
+<form method="post" hx-post="" class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+  {% csrf_token %}
+  <div class="grid content-start gap-4">
+    <div id="form-errors" class="text-sm empty:hidden" role="alert"></div>
+    <c-section title="Each invoice" :padded="True">{% include "billing/partials/_line_editor.html" %}</c-section>
+  </div>
+  <aside class="grid content-start gap-4">
+    <c-section title="Details" :padded="True">
+      <div class="grid gap-4">
+        {% for field in form %}{% include "billing/partials/_field.html" %}{% endfor %}
+      </div>
+    </c-section>
+    <div class="flex justify-end gap-2">
+      <c-ui.button href="{{ cancel_url }}">Cancel</c-ui.button>
+      <c-ui.button type="submit" variant="primary">Save</c-ui.button>
+    </div>
+  </aside>
+</form>
+{% endblock %}

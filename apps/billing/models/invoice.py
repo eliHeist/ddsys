@@ -23,6 +23,10 @@ class Invoice(BillingDocument):
     quotation = models.ForeignKey("billing.Quotation", null=True, blank=True, on_delete=models.PROTECT,
                                   related_name="invoices")
     due_date = models.DateField(null=True, blank=True)
+    subscription = models.ForeignKey("billing.Subscription", null=True, blank=True, on_delete=models.PROTECT,
+                                     related_name="invoices")
+    period_start = models.DateField(null=True, blank=True, help_text="Subscriptions: the period this invoice pays for")
+    period_end = models.DateField(null=True, blank=True)
     amount_paid = models.DecimalField(max_digits=14, decimal_places=2, default=0)
 
     history = HistoricalRecords(excluded_fields=["updated_at"])
@@ -41,8 +45,9 @@ class Invoice(BillingDocument):
         return self.status in self.OPEN
 
     def refresh_payments(self):
-        """Paid amount and status from the valid receipts. Call inside the transaction that changed them."""
-        self.amount_paid = (self.receipts.filter(status="valid").aggregate(s=Sum("amount"))["s"]  # pyright: ignore[reportAttributeAccessIssue]
+        """Paid amount and status from the allocations of valid receipts (payments on it and credit applied to it).
+        Call inside the transaction that changed them."""
+        self.amount_paid = (self.allocations.filter(receipt__status="valid").aggregate(s=Sum("amount"))["s"]  # pyright: ignore[reportAttributeAccessIssue]
                             or Decimal(0))
         if self.status not in (self.Status.DRAFT, self.Status.VOID):
             if self.amount_paid >= self.total:

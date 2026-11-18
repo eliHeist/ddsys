@@ -1,0 +1,24 @@
+{% load ui %}
+{# What the company owes back, as rows (selectors.loans_for sets `repaid` and `owed`). #}
+<div id="loan-rows">
+  {% if loans %}
+    <c-ui.table>
+      <thead><tr><th>Date</th><th>From</th><th>For</th><th>How</th><th class="text-right">Amount</th><th class="text-right">Paid back</th><th class="text-right">Owed</th></tr></thead>
+      <tbody>
+        {% for l in loans %}
+          <tr class="{% if l.is_void %}text-muted line-through{% endif %}">
+            <td>{{ l.date|date:"d/m/Y" }}</td>
+            <td><a class="link" href="{% url 'finance:loan' l.pk %}">{{ l.lender_name }}</a><span class="block text-xs text-muted">{{ l.lender_kind }}</span></td>
+            <td class="max-w-xs truncate">{{ l.purpose }}</td>
+            <td>{% if l.paid_costs_directly %}Paid a cost themselves{% else %}Into {{ l.account }}{% endif %}</td>
+            <td class="text-right tabular-nums">{{ l.amount|number }}</td>
+            <td class="text-right tabular-nums">{% if l.repaid %}{{ l.repaid|number }}{% else %}-{% endif %}</td>
+            <td class="text-right tabular-nums font-medium">{% if not l.must_repay %}<span class="text-xs font-normal text-muted">Not refundable</span>{% elif l.owed %}{{ l.owed|number }}{% else %}<c-status status="paid" label="Paid back" />{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </c-ui.table>
+  {% else %}
+    {% include "core/_ui.html#empty" with message="Nothing owed. Loans, top-ups and costs people paid themselves show here until they are paid back." %}
+  {% endif %}
+</div>

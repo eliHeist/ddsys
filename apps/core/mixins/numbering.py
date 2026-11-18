@@ -3,13 +3,16 @@ from django.db.models.functions import Length
 from django.utils import timezone
 
 
+FIRST_SEQUENCE = 500  # each day's count starts here, so a client never sees "001" on a document
+
+
 def format_number(prefix, on_date, sequence):
-    """PREFIX + YY + DD + SEQ(3) + MM, e.g. INV261000111: 2026, the 10th, first of the day, November."""
+    """PREFIX + YY + DD + SEQ(3) + MM, e.g. INV261050011: 2026, the 10th, the first of the day (500), November."""
     return f"{prefix}{on_date:%y}{on_date:%d}{sequence:03d}{on_date:%m}"
 
 
 def generate_document_number(prefix, model_cls, field_name="number", on_date=None):
-    """The next free number for `on_date` (today if not given). The count restarts every day.
+    """The next free number for `on_date` (today if not given). The count restarts at 500 every day.
 
     Must run inside the transaction that saves the document, so the row lock holds until the insert.
     """
@@ -24,7 +27,7 @@ def generate_document_number(prefix, model_cls, field_name="number", on_date=Non
         .values_list(field_name, flat=True)
         .first()
     )
-    sequence = int(last_number[len(day_prefix):-2]) + 1 if last_number else 1
+    sequence = int(last_number[len(day_prefix):-2]) + 1 if last_number else FIRST_SEQUENCE
     return format_number(prefix, on_date, sequence)
 
 

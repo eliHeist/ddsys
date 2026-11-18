@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}{{ sub.title }}{% endblock %}
+{% block content %}
+<c-page-header title="{{ sub.title }}" back_url="{% url 'billing:subscriptions' %}" back_label="Subscriptions">
+  <c-slot name="meta">
+    <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+      <c-status status="{{ sub.status }}" label="{{ sub.get_status_display }}" />
+      <a class="link" href="{% url 'clients:detail' sub.client_id %}">{{ sub.client }}</a>
+      {% if sub.project %}· <a class="link" href="{% url 'projects:detail' sub.project_id %}">{{ sub.project.title }}</a>{% endif %}
+    </div>
+  </c-slot>
+  {% if can.money and sub.status != "ended" %}
+    <c-ui.button href="{% url 'billing:subscription-edit' sub.pk %}">{% icon "edit" %} Edit</c-ui.button>
+    {% if sub.status == "active" %}
+      <c-ui.button hx-post="{% url 'billing:subscription-pause' sub.pk %}" hx-confirm="Pause? No invoices are made until you resume it.">Pause</c-ui.button>
+      <c-ui.button variant="primary" hx-post="{% url 'billing:subscription-invoice-now' sub.pk %}"
+        hx-confirm="Make the invoice for {{ sub.next_invoice_date|date:'d/m/Y' }} to {{ sub.next_period_end|date:'d/m/Y' }} now?">{% icon "receipt" %} Invoice now</c-ui.button>
+    {% else %}
+      <c-ui.button variant="primary" hx-post="{% url 'billing:subscription-resume' sub.pk %}">Resume</c-ui.button>
+    {% endif %}
+    <c-ui.button variant="danger" :outlined="True" hx-post="{% url 'billing:subscription-end' sub.pk %}" hx-confirm="End this subscription for good? Its invoices stay.">End</c-ui.button>
+  {% endif %}
+</c-page-header>
+<div id="form-errors" class="mb-3 text-sm empty:hidden" role="alert"></div>
+<div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  {% include "core/_ui.html#stat" with label="Each invoice" value=sub.amount|money hint=sub.get_interval_months_display %}
+  {% include "core/_ui.html#stat" with label="Per month" value=sub.monthly_value|money %}
+  {% if sub.status == "active" %}{% include "core/_ui.html#stat" with label="Next invoice" value=sub.next_invoice_date|date:"j M Y" %}{% endif %}
+  {% include "core/_ui.html#stat" with label="Paid through" value=sub.paid_through|date:"j M Y"|default:"Nothing paid yet" %}
+</div>
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+  <div class="grid content-start gap-4">
+    <c-section title="Each invoice">
+      {% include "billing/partials/_document_lines.html" with doc=sub %}
+    </c-section>
+    <c-section title="Invoices" count="{{ invoices|length }}">
+      {% if invoices %}
+        <ul class="divide-y divide-box-border">
+          {% for i in invoices %}
+            <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+              <div><a class="link" href="{% url 'billing:invoice' i.pk %}">{{ i.label }}</a>
+                <span class="block text-xs text-muted">{{ i.period_start|date:"d/m/Y" }} to {{ i.period_end|date:"d/m/Y" }}</span></div>
+              <div class="flex items-center gap-3"><c-status status="{{ i.status }}" label="{{ i.get_status_display }}" size="sm" /><span class="tabular-nums">{{ i.total|number }}</span></div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        {% include "core/_ui.html#empty" with message="No invoices yet. The first is made on the start date." %}
+      {% endif %}
+    </c-section>
+  </div>
+  <aside>
+    <c-section title="Details" :padded="True">
+      <dl class="grid gap-2 text-sm">
+        <div class="flex justify-between gap-3"><dt class="text-muted">Started</dt><dd>{{ sub.start_date|date:"d/m/Y" }}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-muted">Ends</dt><dd>{{ sub.end_date|date:"d/m/Y"|default:"When ended" }}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-muted">Invoices</dt><dd>{% if sub.auto_issue %}Issued automatically{% else %}Made as drafts to check{% endif %}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-muted">Days to pay</dt><dd>{{ sub.due_days }}</dd></div>
+        <div class="flex justify-between gap-3"><dt class="text-muted">ID in the product</dt><dd>{{ sub.external_ref|default:"-" }}</dd></div>
+        {% if sub.notes %}<div class="grid gap-1"><dt class="text-muted">Notes</dt><dd class="whitespace-pre-line">{{ sub.notes }}</dd></div>{% endif %}
+      </dl>
+    </c-section>
+  </aside>
+</div>
+{% endblock %}

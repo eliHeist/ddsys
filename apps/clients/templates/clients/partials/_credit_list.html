@@ -1,0 +1,13 @@
+{% load ui %}
+{# Receipts with credit left (billing.selectors.credit_receipts), on the client's and a quotation's page. #}
+<ul class="divide-y divide-box-border">
+  {% for r in credit_receipts %}
+    <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+      <div>
+        <a class="link" href="{% url 'billing:receipt' r.pk %}">{{ r.number }}</a>
+        <span class="block text-xs text-muted">{{ r.date|date:"d/m/Y" }} · {{ r.purpose }}{% if r.credit != r.amount %} · {{ r.amount|number }} received{% endif %}</span>
+      </div>
+      <span class="font-semibold tabular-nums text-accent">{{ r.credit|number }}</span>
+    </li>
+  {% endfor %}
+</ul>

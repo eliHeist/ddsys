@@ -1,0 +1,22 @@
+{% autoescape off %}Hello {{ name }},
+
+{{ invited_by }} has added you to the {{ company }} system.
+
+Choose your password here (the link works once and expires in {{ days }} day{{ days|pluralize }}):
+{{ set_password_url }}
+
+Your details
+- Sign in with: {{ email }}
+- Role: {{ role }}{% if can_do %} ({{ can_do }}){% endif %}{% if title %}
+- Job title: {{ title }}{% endif %}{% if is_director %}
+- Listed as a director{% endif %}
+
+Sign in at: {{ sign_in_url }}
+
+After signing in, please turn on two-factor sign-in (an authenticator app or a passkey):
+{{ security_url }}
+
+If the link has expired, use "Forgot password?" on the sign-in page, or ask an admin to send a new one.
+
+{{ company }}
+{% endautoescape %}

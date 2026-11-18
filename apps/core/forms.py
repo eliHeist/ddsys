@@ -68,7 +68,7 @@ class CompanySettingsForm(Styled, forms.ModelForm):
 class StaffEditForm(Styled, forms.ModelForm):
     class Meta:
         model = StaffProfile
-        fields = ("role", "title", "phone", "is_active")
+        fields = ("role", "title", "phone", "is_director", "is_active")
 
 
 class StaffCreateForm(Styled, forms.Form):
@@ -78,8 +78,8 @@ class StaffCreateForm(Styled, forms.Form):
     role = forms.ChoiceField(choices=StaffProfile.Role.choices, initial=StaffProfile.Role.STAFF)
     title = forms.CharField(max_length=80, required=False)
     phone = forms.CharField(max_length=30, required=False)
-    password = forms.CharField(min_length=10, widget=forms.PasswordInput,
-                               help_text="At least 10 characters. Ask them to change it after their first sign-in.")
+    is_director = forms.BooleanField(required=False, label="A director of the company",
+                                     help_text="Can then be chosen as the lender on loans")
 
     def clean_email(self):
         email = self.cleaned_data["email"].lower()

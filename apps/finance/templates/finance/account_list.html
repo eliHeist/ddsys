@@ -17,9 +17,9 @@
   <c-slot name="actions">{% if can.admin %}<c-ui.button size="sm" href="{% url 'finance:account-new' %}">{% icon "plus" %} Account</c-ui.button>{% endif %}</c-slot>
   <ul class="divide-y divide-box-border">
     {% for a in accounts %}
-      <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 {% if not a.is_active %}text-muted{% endif %}">
+      <li class="flex flex-wrap items-center justify-between gap-3 px-5 py-3 {% if not a.is_active %}text-muted{% endif %}">
         <div>
-          <a class="font-medium underline" href="{% url 'finance:account' a.pk %}">{{ a.name }}</a>
+          <a class="link" href="{% url 'finance:account' a.pk %}">{{ a.name }}</a>
           <span class="block text-xs text-muted">{{ a.get_kind_display }}{% if a.account_number %} · {{ a.account_number }}{% endif %}{% if not a.is_active %} · closed{% endif %}</span>
         </div>
         <span class="text-lg font-semibold tabular-nums">{{ a.balance|money }}</span>

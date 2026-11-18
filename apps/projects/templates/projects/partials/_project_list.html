@@ -2,9 +2,9 @@
 {% if projects %}
   <ul class="divide-y divide-box-border">
     {% for p in projects %}
-      <li class="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+      <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm">
         <div class="min-w-0">
-          <a class="font-medium underline" href="{% url 'projects:detail' p.pk %}">{{ p.title }}</a>
+          <a class="link" href="{% url 'projects:detail' p.pk %}">{{ p.title }}</a>
           <span class="block text-xs text-muted">{% if p.due_date %}Due {{ p.due_date|date:"j M Y" }}{% else %}No due date{% endif %}</span>
         </div>
         <c-status status="{{ p.status }}" label="{{ p.get_status_display }}" size="sm" />

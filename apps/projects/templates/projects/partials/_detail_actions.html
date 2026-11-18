@@ -1,0 +1,11 @@
+{% load ui %}
+{% if project.is_product %}
+  {% if can.money %}
+    <c-ui.button href="{% url 'finance:income-new' %}?project={{ project.pk }}">{% icon "plus" %} Other income</c-ui.button>
+    <c-ui.button variant="primary" href="{% url 'billing:subscription-new' %}?project={{ project.pk }}">{% icon "plus" %} Subscriber</c-ui.button>
+  {% endif %}
+  <c-ui.button href="{% url 'billing:invoice-new' %}?project={{ project.pk }}">{% icon "plus" %} Invoice</c-ui.button>
+{% elif project.kind == "client" %}
+  <c-ui.button href="{% url 'billing:quotation-new' %}?project={{ project.pk }}">{% icon "plus" %} Quotation</c-ui.button>
+  <c-ui.button variant="primary" href="{% url 'billing:invoice-new' %}?project={{ project.pk }}">{% icon "plus" %} Invoice</c-ui.button>
+{% endif %}

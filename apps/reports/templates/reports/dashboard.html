@@ -20,7 +20,7 @@
       <c-slot name="actions"><c-ui.button size="sm" variant="ghost" href="{% url 'finance:accounts' %}">All</c-ui.button></c-slot>
       <ul class="divide-y divide-box-border">
         {% for a in accounts %}
-          <li class="flex items-center justify-between px-4 py-2.5 text-sm"><a class="underline" href="{% url 'finance:account' a.pk %}">{{ a.name }}</a><span class="font-semibold tabular-nums">{{ a.balance|money }}</span></li>
+          <li class="flex items-center justify-between px-5 py-3 text-sm"><a class="link" href="{% url 'finance:account' a.pk %}">{{ a.name }}</a><span class="font-semibold tabular-nums">{{ a.balance|money }}</span></li>
         {% endfor %}
       </ul>
     </c-section>

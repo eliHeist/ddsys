@@ -1,11 +1,18 @@
 {% extends "base.html" %}
 {% load ui %}
-{% block title %}Projects{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 {% block content %}
-<c-page-header title="Projects">
-  <c-ui.button variant="primary" size="sm" href="{% url 'projects:new' %}">{% icon "plus" %} New project</c-ui.button>
-</c-page-header>
-<c-list-toolbar target="project-rows" q="{{ q }}" status="{{ status }}" placeholder="Search project or client"
+{% if products %}
+  <c-page-header title="Products" subtitle="Dakdot's own products: what they earn and what they cost.">
+    <c-ui.button variant="primary" size="sm" href="{% url 'projects:new' %}?kind=product">{% icon "plus" %} New product</c-ui.button>
+  </c-page-header>
+{% else %}
+  <c-page-header title="Projects" subtitle="Client work and Dakdot's internal projects.">
+    <c-ui.button size="sm" href="{% url 'projects:new' %}?kind=internal">{% icon "plus" %} Internal project</c-ui.button>
+    <c-ui.button variant="primary" size="sm" href="{% url 'projects:new' %}">{% icon "plus" %} Client project</c-ui.button>
+  </c-page-header>
+{% endif %}
+<c-list-toolbar target="project-rows" q="{{ q }}" status="{{ status }}" placeholder="Search name{% if not products %} or client{% endif %}"
   :tabs="[('open', 'Open'), ('completed', 'Completed'), ('cancelled', 'Cancelled'), ('all', 'All')]" />
 <c-section>{% include "projects/partials/_project_rows.html" %}</c-section>
 {% endblock %}

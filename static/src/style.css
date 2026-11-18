@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @source "../../";
 
+/* Inter Tight, self-hosted (no Google request): bundled into static/dist by Vite. */
+@import "@fontsource-variable/inter-tight";
+
 /* Kit tokens + class list (generated, see theme.css), then the Dakdot brand on top. */
 @import "./cotton-ui.sources.css";
 @import "./theme.css";
@@ -20,6 +23,44 @@
 }
 
 /* App-specific styles the kit has no component for. Everything else is a django-cotton-ui component
-   (<c-ui.*>) or an app component in templates/cotton/ (<c-status>, <c-section>, <c-page-header>...). */
+   (<c-ui.*>) or an app component in apps/core/templates/cotton/ (<c-status>, <c-section>, <c-page-header>...). */
+@layer base {
+	/* the page colour: --color-bg is a kit token, not a Tailwind colour, so there is no bg-bg utility */
+	body {
+		background-color: var(--color-bg);
+		color: var(--color-fg);
+		font-feature-settings: "cv11", "ss01";
+		letter-spacing: -0.005em;
+	}
+	h1, h2, h3 {
+		letter-spacing: -0.02em;
+	}
+}
+
 @layer components {
+	/* A link to a record inside text or a table row: reads as text, turns accent on hover. */
+	.link {
+		@apply font-medium text-fg underline-offset-4 decoration-accent/40 transition-colors hover:text-accent hover:underline;
+	}
+}
+
+/* Sidebar (apps/core/templates/core/_nav.html): unlayered on purpose, so it beats the kit navlist's own
+   utility classes. Small caps group headings, accent-tinted current item. */
+.app-nav [data-navlist] button {
+	@apply px-3 pt-4 pb-1 text-[11px] font-semibold tracking-[0.08em] text-ink-400 uppercase;
+}
+.app-nav [data-navlist] a {
+	@apply py-1.5 text-[13.5px] text-ink-600 dark:text-ink-400;
+}
+.app-nav [data-navlist] a svg {
+	@apply size-4 text-ink-400 transition-colors;
+}
+.app-nav [data-navlist] a:hover svg {
+	@apply text-ink-600 dark:text-ink-300;
+}
+.app-nav [data-navlist] a.is-current {
+	@apply bg-[var(--color-accent-soft)] font-semibold text-accent;
+}
+.app-nav [data-navlist] a.is-current svg {
+	@apply text-accent;
 }

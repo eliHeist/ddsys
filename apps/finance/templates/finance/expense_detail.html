@@ -12,14 +12,23 @@
 <c-section :padded="True" class="max-w-2xl">
   <dl class="grid gap-2 text-sm">
     <div class="flex justify-between gap-3"><dt class="text-muted">Amount</dt><dd class="text-lg font-semibold tabular-nums">{{ expense.amount|money }}</dd></div>
+    {% if expense.fee %}
+      <div class="flex justify-between gap-3"><dt class="text-muted">Fee (its own line in the account)</dt><dd class="tabular-nums">{{ expense.fee|money }}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">Total out of {{ expense.account }}</dt><dd class="font-semibold tabular-nums">{{ expense.account_amount|add:expense.fee|money }}</dd></div>
+    {% endif %}
     <div class="flex justify-between gap-3"><dt class="text-muted">Date</dt><dd>{{ expense.date|date:"d/m/Y" }}</dd></div>
     <div class="flex justify-between gap-3"><dt class="text-muted">Category</dt><dd>{{ expense.category }}</dd></div>
-    <div class="flex justify-between gap-3"><dt class="text-muted">Paid from</dt><dd><a class="underline" href="{% url 'finance:account' expense.account_id %}">{{ expense.account }}</a></dd></div>
+    {% if expense.account_id %}
+      <div class="flex justify-between gap-3"><dt class="text-muted">Paid from</dt><dd class="text-right"><a class="link" href="{% url 'finance:account' expense.account_id %}">{{ expense.account }}</a>{% if expense.loan_id %}<span class="block text-xs text-muted tabular-nums">{{ expense.account_amount|number }} of it</span>{% endif %}</dd></div>
+    {% endif %}
+    {% if expense.loan_id %}
+      <div class="flex justify-between gap-3"><dt class="text-muted">{% if expense.account_id %}Topped up by{% else %}Paid by{% endif %}</dt><dd class="text-right">{{ expense.loan.lender_name }}, from their own money<span class="block text-xs"><span class="tabular-nums text-muted">{{ expense.personal_amount|number }} · </span><a class="link" href="{% url 'finance:loan' expense.loan_id %}">{% if expense.loan.must_repay %}owed back to them{% else %}put in as capital{% endif %}</a></span></dd></div>
+    {% endif %}
     <div class="flex justify-between gap-3"><dt class="text-muted">Paid to</dt><dd>{{ expense.payee|default:"-" }}</dd></div>
-    <div class="flex justify-between gap-3"><dt class="text-muted">Project</dt><dd>{% if expense.project %}<a class="underline" href="{% url 'projects:detail' expense.project_id %}">{{ expense.project.title }}</a>{% else %}-{% endif %}</dd></div>
+    <div class="flex justify-between gap-3"><dt class="text-muted">Project</dt><dd>{% if expense.project %}<a class="link" href="{% url 'projects:detail' expense.project_id %}">{{ expense.project.title }}</a>{% else %}-{% endif %}</dd></div>
     <div class="flex justify-between gap-3"><dt class="text-muted">Reference</dt><dd>{{ expense.reference|default:"-" }}</dd></div>
     <div class="flex justify-between gap-3"><dt class="text-muted">Recorded by</dt><dd>{% firstof expense.created_by.get_full_name expense.created_by.email "-" %}</dd></div>
-    {% if expense.attachment %}<div class="flex justify-between gap-3"><dt class="text-muted">Receipt</dt><dd><a class="underline" href="{{ expense.attachment.url }}" target="_blank" hx-boost="false">Open</a></dd></div>{% endif %}
+    {% if expense.attachment %}<div class="flex justify-between gap-3"><dt class="text-muted">Receipt</dt><dd><a class="link" href="{{ expense.attachment.url }}" target="_blank" hx-boost="false">Open</a></dd></div>{% endif %}
     {% if expense.status == "void" %}<div class="grid gap-1 rounded-control bg-red-50 p-2 text-red-800 dark:bg-red-950/30 dark:text-red-200"><dt class="font-medium">Voided {{ expense.voided_at|date:"j M Y" }}</dt><dd>{{ expense.void_reason }}</dd></div>{% endif %}
   </dl>
 </c-section>

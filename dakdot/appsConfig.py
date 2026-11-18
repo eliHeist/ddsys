@@ -2,6 +2,7 @@ from django.urls import path, include
 
 # Every domain app is listed here only: this feeds INSTALLED_APPS (getAppNames) and the URLs (getAppUrls).
 app_configs = [
+
 	{ 'app_name': 'accounts', 'url': 'app/accounts/', 'namespace': 'accounts' },
 
 	{ 'app_name': 'apps.core', 'url': 'app/settings/', 'namespace': 'core' },
@@ -17,6 +18,10 @@ app_configs = [
 	{ 'app_name': 'apps.finance', 'url': 'app/finance/', 'namespace': 'finance' },
 
 	{ 'app_name': 'apps.documents', 'url': 'app/documents/', 'namespace': 'documents' },
+
+	# The JSON API for Dakdot's products' apps (django-ninja). No url here: dakdot/urls.py mounts it at /api/v1/
+	# itself, outside an app namespace, so ninja's own docs and URL names ("api-v1:...") resolve.
+	{ 'app_name': 'apps.api', 'url': None, 'namespace': 'api' },
 ]
 
 

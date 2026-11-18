@@ -1,0 +1,23 @@
+{% load ui %}
+{# What the numbers mean depends on the kind: a job's profit, a product's revenue and costs, an internal project's cost. #}
+{% if project.is_internal %}
+  <div class="mb-4 grid gap-3 sm:grid-cols-3">
+    {% include "core/_ui.html#stat" with label="Cost to date" value=money.spent|money hint="Expenses linked to this project" %}
+  </div>
+{% elif project.is_product %}
+  <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    {% include "core/_ui.html#stat" with label="Active subscribers" value=active_count %}
+    {% include "core/_ui.html#stat" with label="Per month" value=monthly|money hint="Active subscriptions" %}
+    {% include "core/_ui.html#stat" with label="Revenue" value=money.income|money hint="Invoices + other income" %}
+    {% include "core/_ui.html#stat" with label="Costs" value=money.spent|money %}
+    {% include "core/_ui.html#stat" with label="Net" value=money.profit|money %}
+  </div>
+{% else %}
+  <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    {% include "core/_ui.html#stat" with label="Invoiced" value=money.invoiced|money %}
+    {% include "core/_ui.html#stat" with label="Received" value=money.received|money %}
+    {% include "core/_ui.html#stat" with label="Still owed" value=money.owing|money %}
+    {% include "core/_ui.html#stat" with label="Spent" value=money.spent|money %}
+    {% include "core/_ui.html#stat" with label="Profit (invoiced − spent)" value=money.profit|money %}
+  </div>
+{% endif %}

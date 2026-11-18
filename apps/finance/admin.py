@@ -1,7 +1,7 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import Account, Expense, ExpenseCategory, Transaction, Transfer
+from .models import Account, Expense, ExpenseCategory, Loan, LoanRepayment, Transaction, Transfer
 
 
 @admin.register(Account)
@@ -42,3 +42,27 @@ class TransactionAdmin(admin.ModelAdmin):
 @admin.register(Transfer)
 class TransferAdmin(admin.ModelAdmin):
     list_display = ("date", "from_account", "to_account", "amount", "fee", "status")
+
+
+class RepaymentInline(admin.TabularInline):
+    model = LoanRepayment
+    extra = 0
+    can_delete = False
+    readonly_fields = ("date", "amount", "fee", "account", "reference", "status")
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Loan)
+class LoanAdmin(SimpleHistoryAdmin):
+    """Read-only: loans and repayments are recorded in the app, which writes their account lines."""
+    list_display = ("date", "lender_name", "amount", "account", "must_repay", "status")
+    list_filter = ("status", "must_repay")
+    search_fields = ("lender_name", "purpose", "reference")
+    readonly_fields = ("person", "lender_name", "date", "amount", "account", "must_repay", "purpose", "reference",
+                       "status", "voided_at", "void_reason", "created_by")
+    inlines = (RepaymentInline,)
+
+    def has_add_permission(self, request):
+        return False

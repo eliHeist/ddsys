@@ -7,11 +7,11 @@
       {% for e in expenses %}
         <tr class="{% if e.status == 'void' %}text-muted line-through{% endif %}">
           <td>{{ e.date|date:"d/m/Y" }}</td>
-          <td><a class="underline" href="{% url 'finance:expense' e.pk %}">{{ e.description }}</a>{% if e.payee %}<span class="block text-xs text-muted">{{ e.payee }}</span>{% endif %}</td>
+          <td><a class="link" href="{% url 'finance:expense' e.pk %}">{{ e.description }}</a>{% if e.payee %}<span class="block text-xs text-muted">{{ e.payee }}</span>{% endif %}</td>
           <td>{{ e.category }}</td>
-          {% if not hide_project %}<td>{% if e.project_id %}<a class="underline" href="{% url 'projects:detail' e.project_id %}">{{ e.project.title }}</a>{% else %}-{% endif %}</td>{% endif %}
-          <td>{{ e.account }}</td>
-          <td class="text-right tabular-nums">{{ e.amount|number }}</td>
+          {% if not hide_project %}<td>{% if e.project_id %}<a class="link" href="{% url 'projects:detail' e.project_id %}">{{ e.project.title }}</a>{% else %}-{% endif %}</td>{% endif %}
+          <td>{% if e.account_id %}{{ e.account }}{% endif %}{% if e.loan_id %}<span class="block {% if e.account_id %}text-xs text-muted{% endif %}">{% if e.account_id %}+ {{ e.loan.amount|number }} by {% endif %}<a class="link" href="{% url 'finance:loan' e.loan_id %}">{{ e.loan.lender_name }}</a></span>{% if not e.account_id %}<span class="block text-xs text-muted">Own money</span>{% endif %}{% endif %}</td>
+          <td class="text-right tabular-nums">{{ e.amount|number }}{% if e.fee %}<span class="block text-xs text-muted">+ {{ e.fee|number }} fee</span>{% endif %}</td>
         </tr>
       {% endfor %}
     </tbody>

@@ -19,4 +19,11 @@ urlpatterns = [
     path("transfers/<int:pk>/void/", views.transfer_void, name="transfer-void"),
     path("income/new/", views.income_create, name="income-new"),
     path("adjustments/new/", views.adjustment_create, name="adjustment-new"),
+    path("loans/", views.loan_list, name="loans"),
+    path("loans/new/", views.loan_create, name="loan-new"),
+    path("loans/<int:pk>/", views.loan_detail, name="loan"),
+    path("loans/<int:pk>/repay/", views.loan_repay, name="loan-repay"),
+    path("loans/<int:pk>/must-repay/", views.loan_must_repay, name="loan-must-repay"),
+    path("loans/<int:pk>/void/", views.loan_void, name="loan-void"),
+    path("repayments/<int:pk>/void/", views.repayment_void, name="repayment-void"),
 ]

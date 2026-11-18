@@ -7,14 +7,22 @@
   <c-ui.button href="{% url 'clients:edit' client.pk %}">{% icon "edit" %} Edit</c-ui.button>
   <c-ui.button href="{% url 'clients:statement' client.pk %}">{% icon "printer" %} Statement</c-ui.button>
   <c-ui.button href="{% url 'projects:new' %}?client={{ client.pk }}">{% icon "plus" %} Project</c-ui.button>
+  {% if deposit_dialog %}<c-ui.button @click='$dispatch("open-dialog", {{ deposit_dialog|jsattr }})'>{% icon "cash" %} Record deposit</c-ui.button>{% endif %}
   <c-ui.button variant="primary" href="{% url 'billing:invoice-new' %}?client={{ client.pk }}">{% icon "plus" %} Invoice</c-ui.button>
 </c-page-header>
-<div class="mb-4 grid gap-3 sm:grid-cols-3">
-  {% include "core/_ui.html#stat" with label="Owes Dakdot" value=balance|money %}
+<div id="form-errors" class="mb-3 text-sm empty:hidden" role="alert"></div>
+<div class="mb-4 grid gap-3 {% if credit %}sm:grid-cols-4{% else %}sm:grid-cols-3{% endif %}">
+  {% include "core/_ui.html#stat" with label="Owes Dakdot" value=owing|money %}
+  {% if credit %}{% include "core/_ui.html#stat" with label="On account (credit)" value=credit|money %}{% endif %}
   {% include "core/_ui.html#stat" with label="Projects" value=projects|length %}
   {% include "core/_ui.html#stat" with label="Invoices" value=invoices|length %}
 </div>
 <div class="grid gap-4 lg:grid-cols-2">
+  {% if credit_receipts %}
+    <c-section title="Credit on account" subtitle="Deposits and overpayments not yet used on an invoice." class="lg:col-span-2">
+      {% include "clients/partials/_credit_list.html" %}
+    </c-section>
+  {% endif %}
   <c-section title="Projects">
     {% include "projects/partials/_project_list.html" with projects=projects %}
   </c-section>

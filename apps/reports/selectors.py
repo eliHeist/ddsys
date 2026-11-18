@@ -26,8 +26,8 @@ async def dashboard(can_see_money):
         data |= {
             "accounts": await finance.balances(),
             "month": await finance.month_totals(today.year, today.month),
-            "receipts": [r async for r in Receipt.objects.select_related("invoice", "account")[:6]],
-            "expenses": [e async for e in Expense.objects.select_related("category", "account")[:6]],
+            "receipts": [r async for r in Receipt.objects.select_related("invoice", "quotation", "project", "account")[:6]],
+            "expenses": [e async for e in Expense.objects.select_related("category", "account", "loan")[:6]],
         }
     return data
 
@@ -41,7 +41,7 @@ async def search(query, limit=6):
             Q(name__icontains=query) | Q(contact_person__icontains=query) | Q(phone__icontains=query))[:limit]],
          lambda c: (c.name, c.contact_person)),
         ("Projects", "projects:detail", [p async for p in Project.objects.select_related("client").filter(
-            Q(title__icontains=query) | Q(client__name__icontains=query))[:limit]], lambda p: (p.title, p.client.name)),
+            Q(title__icontains=query) | Q(client__name__icontains=query))[:limit]], lambda p: (p.title, p.client.name if p.client else "Dakdot's own work")),
         ("Invoices", "billing:invoice", [i async for i in Invoice.objects.select_related("client").filter(
             Q(number__icontains=query) | Q(client__name__icontains=query))[:limit]],
          lambda i: (i.label, f"{i.client.name} · {i.get_status_display()}")),

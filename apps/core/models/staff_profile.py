@@ -14,6 +14,7 @@ class StaffProfile(models.Model):
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.STAFF)
     phone = models.CharField(max_length=30, blank=True)
     title = models.CharField(max_length=80, blank=True, help_text="Job title, e.g. Designer")
+    is_director = models.BooleanField(default=False, help_text="A director of the company: can be chosen as a lender on loans")
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -21,3 +22,7 @@ class StaffProfile(models.Model):
 
     def __str__(self):
         return f"{self.user} ({self.get_role_display()})"
+
+    @property
+    def name(self):
+        return self.user.get_full_name() or self.user.email

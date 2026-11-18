@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load ui %}
+{% block title %}Owed back{% endblock %}
+{% block content %}
+<c-page-header title="Owed back" subtitle="Loans and top-ups from directors, staff or outside lenders, and company costs people paid from their own pocket.">
+  <c-ui.button href="{% url 'finance:expense-new' %}">{% icon "plus" %} Expense someone paid</c-ui.button>
+  <c-ui.button variant="primary" href="{% url 'finance:loan-new' %}">{% icon "plus" %} Loan or top-up</c-ui.button>
+</c-page-header>
+<div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  {% include "core/_ui.html#stat" with label="Owed in total" value=totals.total|money %}
+  {% include "core/_ui.html#stat" with label="To directors" value=totals.directors|money %}
+  {% include "core/_ui.html#stat" with label="To staff" value=totals.staff|money %}
+  {% include "core/_ui.html#stat" with label="To outside lenders" value=totals.others|money %}
+</div>
+<c-list-toolbar target="loan-rows" q="{{ q }}" status="{{ status }}" :tabs="tabs" placeholder="Search lender, purpose, reference" />
+<c-section>{% include "finance/partials/_loan_rows.html" %}</c-section>
+{% endblock %}

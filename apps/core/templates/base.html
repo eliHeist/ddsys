@@ -6,12 +6,12 @@
 		href="#main"
 		class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[100] focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">Skip to content</a>
 	<div class="flex min-h-screen">
-		<aside class="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-box-border bg-surface md:flex">
+		<aside class="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-box-border bg-[var(--color-surface)] md:flex">
 			{% include "core/_nav.html" %}
 		</aside>
 
 		<div class="flex min-w-0 flex-1 flex-col">
-			<header class="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-box-border bg-surface/90 px-3 backdrop-blur md:px-5">
+			<header class="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-box-border bg-[color-mix(in_oklab,var(--color-surface)_85%,transparent)] px-3 backdrop-blur-md md:px-6">
 				{# mobile: the same navigation in a drawer #}
 				<div class="md:hidden">
 					<c-ui.drawer side="left" size="sm" title="{{ BRAND }}">
@@ -53,9 +53,9 @@
 
 				<div class="flex items-center gap-1">
 					<span class="hidden sm:block">
-						<c-ui.button variant="primary" size="sm" href="{% url 'billing:invoice-new' %}" class="inline-flex items-center gap-1.5">{% icon "plus" %} New invoice</c-ui.button>
+						<c-ui.button variant="primary" size="sm" href="{% url 'billing:invoice-new' %}">{% icon "plus" %} New invoice</c-ui.button>
 					</span>
-					<c-ui.mode_toggle />
+					<c-theme.menu />
 					<c-ui.dropdown align="end" min_width="15rem">
 						<c-slot name="trigger">
 							<button type="button"
@@ -76,7 +76,7 @@
 			</header>
 			<main
 				id="main"
-				class="mx-auto w-full max-w-7xl flex-1 p-4 md:p-6">
+				class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-8 md:py-8">
 				{% block content %}{% endblock %}
 			</main>
 		</div>

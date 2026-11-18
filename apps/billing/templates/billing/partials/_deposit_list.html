@@ -1,0 +1,13 @@
+{% load ui %}
+{# A quotation's deposits (receipts annotated with `credit`): what came in, and how much is still waiting. #}
+<ul class="divide-y divide-box-border">
+  {% for r in deposits %}
+    <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm {% if r.status == 'void' %}text-muted line-through{% endif %}">
+      <div>
+        <a class="link" href="{% url 'billing:receipt' r.pk %}">{{ r.number }}</a>
+        <span class="block text-xs text-muted">{{ r.date|date:"d/m/Y" }} · {{ r.account }}{% if r.status == 'valid' %} · {% if r.credit %}{{ r.credit|number }} waiting{% else %}applied{% endif %}{% endif %}</span>
+      </div>
+      <span class="tabular-nums">{{ r.amount|number }}</span>
+    </li>
+  {% endfor %}
+</ul>

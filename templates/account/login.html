@@ -62,11 +62,15 @@
                     {% endif %}
                 </c-ui.field>
                 <c-ui.field>
-                    <c-ui.checkbox
-                        name="{{ form.remember.name }}"
-                        id="{{ form.remember.id_for_label }}"
-                        label="{{ form.remember.label }}"
-                    />
+                    {# the kit's checkbox works inside its group, which holds the checked state #}
+                    <c-ui.checkbox.group name="{{ form.remember.name }}">
+                        <c-ui.checkbox
+                            name="{{ form.remember.name }}"
+                            value="on"
+                            id="{{ form.remember.id_for_label }}"
+                            label="{{ form.remember.label }}"
+                        />
+                    </c-ui.checkbox.group>
         
                     {% if form.remember.errors %}
                         <c-ui.error>{{ form.remember.errors.0 }}</c-ui.error>

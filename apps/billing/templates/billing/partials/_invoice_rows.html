@@ -6,7 +6,7 @@
       <tbody>
         {% for i in page_obj %}
           <tr>
-            <td><a class="font-medium underline" href="{% url 'billing:invoice' i.pk %}">{{ i.label }}</a>{% if i.project %}<span class="block text-xs text-muted">{{ i.project.title }}</span>{% endif %}</td>
+            <td><a class="link" href="{% url 'billing:invoice' i.pk %}">{{ i.label }}</a>{% if i.project %}<span class="block text-xs text-muted">{{ i.project.title }}</span>{% endif %}</td>
             <td>{{ i.client }}</td>
             <td>{{ i.date|date:"d/m/Y"|default:"-" }}</td>
             <td>{{ i.due_date|date:"d/m/Y"|default:"-" }}</td>

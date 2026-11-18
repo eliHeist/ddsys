@@ -6,7 +6,7 @@
       <tbody>
         {% for c in page_obj %}
           <tr class="{% if not c.is_active %}text-muted{% endif %}">
-            <td><a class="font-medium underline" href="{% url 'clients:detail' c.pk %}">{{ c.name }}</a></td>
+            <td><a class="link" href="{% url 'clients:detail' c.pk %}">{{ c.name }}</a></td>
             <td>{{ c.contact_person|default:"-" }}</td>
             <td>{{ c.phone|default:"-" }}</td>
             <td class="text-right tabular-nums">{% if c.owing %}{{ c.owing|number }}{% else %}-{% endif %}</td>

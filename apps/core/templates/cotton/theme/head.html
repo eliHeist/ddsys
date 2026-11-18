@@ -1,0 +1,71 @@
+<c-vars dark_from="19" light_from="7" />
+
+{% comment %}
+Colour scheme, set before the first paint (no flash). Put it in <head> before the stylesheet.
+The choice is saved per browser under the "theme" key:
+  system  follow the device setting (the default)
+  auto    dark from {{ dark_from }}:00 to {{ light_from }}:00 local time, light the rest of the day
+  light / dark  always
+Exposes window.theme = { get(), set(mode), isDark() } for <c-theme.menu>; every change fires
+a "theme-change" window event with the mode as its detail.
+{% endcomment %}
+<script>
+    (function () {
+        var KEY = "theme";
+        var DARK_FROM = {{ dark_from }};
+        var LIGHT_FROM = {{ light_from }};
+        var deviceDark = window.matchMedia("(prefers-color-scheme: dark)");
+        var timer = null;
+
+        function get() {
+            try { return localStorage.getItem(KEY) || "system"; } catch (e) { return "system"; }
+        }
+
+        function isNight(now) {
+            var hour = now.getHours();
+            return hour >= DARK_FROM || hour < LIGHT_FROM;
+        }
+
+        function isDark(mode) {
+            mode = mode || get();
+            if (mode === "dark") return true;
+            if (mode === "light") return false;
+            if (mode === "auto") return isNight(new Date());
+            return deviceDark.matches;
+        }
+
+        // milliseconds until the next 7am / 7pm switch, so "auto" flips while the page is open
+        function untilNextSwitch() {
+            var now = new Date();
+            var next = new Date(now);
+            next.setHours(isNight(now) ? LIGHT_FROM : DARK_FROM, 0, 0, 0);
+            if (next <= now) next.setDate(next.getDate() + 1);
+            return next - now;
+        }
+
+        function apply() {
+            var mode = get();
+            var dark = isDark(mode);
+            document.documentElement.classList.toggle("dark", dark);
+            document.documentElement.style.colorScheme = dark ? "dark" : "light";
+            clearTimeout(timer);
+            if (mode === "auto") timer = setTimeout(apply, untilNextSwitch() + 1000);
+        }
+
+        function set(mode) {
+            try { localStorage.setItem(KEY, mode); } catch (e) {}
+            apply();
+            window.dispatchEvent(new CustomEvent("theme-change", { detail: mode }));
+        }
+
+        deviceDark.addEventListener("change", function () { if (get() === "system") apply(); });
+        // another tab changed it, or the laptop woke up past a switch time
+        window.addEventListener("storage", function (e) {
+            if (e.key === KEY) { apply(); window.dispatchEvent(new CustomEvent("theme-change", { detail: get() })); }
+        });
+        document.addEventListener("visibilitychange", function () { if (!document.hidden) apply(); });
+
+        window.theme = { get: get, set: set, isDark: isDark };
+        apply();
+    })();
+</script>

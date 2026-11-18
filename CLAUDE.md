@@ -19,7 +19,7 @@ uv run python manage.py createsuperuser
 uv run uvicorn dakdot.asgi:application --reload --port 8000
 
 # Tests: name the modules (apps/ has no __init__.py, so bare discovery misses them)
-uv run python manage.py test apps.billing.tests apps.reports.test_pages
+uv run python manage.py test apps.billing.tests apps.reports.test_pages apps.api.tests
 ```
 
 Frontend (`static/`, pnpm): `pnpm install`, `pnpm dev`, `pnpm build`. `prebuild` regenerates `src/cotton-ui.sources.css`
@@ -56,9 +56,37 @@ invoices, receipts), `finance` (accounts, transactions, expenses, transfers), `d
 - A **receipt** is the only way client money comes in: `receipts.record_payment` creates the receipt (numbered from the
   payment date), a money-in `finance.Transaction` on the chosen account, and refreshes the invoice's paid amount/status.
   It stores invoice total / previously paid at that moment so reprints never change.
+- Fees (mobile money / bank charges) are their own `FEE` transaction on the same account, linked to the receipt,
+  expense or transfer they were charged on (`finance.services.record_fee`). A receipt's fee is taken off on the way in:
+  the client is still credited the full amount. An expense's fee counts in its project's costs.
 - Account balances are never stored: opening balance + valid transactions (`finance.selectors.balances`).
   Transactions are written only by services and voided with their receipt / expense / transfer, never deleted.
 - History: `django-simple-history` on clients, projects, quotations, invoices, receipts, accounts and expenses.
+
+### Projects, products and subscriptions
+- `Project.kind`: **client** work (has a client; takes only that client's documents), **internal** (Dakdot's own
+  work, no client, costs only) or **product** (a product Dakdot owns and sells; no client; needs a `code`).
+  Projects page = client + internal; Products page = products. The project page's summary changes per kind.
+- Other income (`finance.Transaction`, kind other_income) can carry a `project`, so a product's direct earnings count.
+- `billing.Subscription`: a client billed every 1/3/6/12 months from its own lines, for a product plan or a service.
+  `services/subscriptions.make_invoice` creates the invoice for `next_invoice_date`..period end (sets
+  `Invoice.subscription/period_start/period_end`), issues it if `auto_issue`, and moves the date on.
+  **`manage.py bill_subscriptions` must run daily** (cron / Task Scheduler) to bill what has fallen due.
+  "Paid through" = latest `period_end` of a paid invoice.
+- `Subscription.external_ref` is the customer's ID inside the product, so the product's app can match its users.
+
+### API (apps/api, django-ninja)
+- Read-only JSON at `/api/v1/` (mounted in `dakdot/urls.py`, outside the appsConfig namespaces so ninja's
+  `api-v1:` URL names and docs work). Async endpoints in `apps/api/routers/` (one file per resource), schemas in
+  `schemas.py`, querysets in `selectors.py`; every queryset is limited to `request.auth.product`.
+- Auth: `Authorization: Bearer dak_<lookup>_<secret>` (`auth.ApiKeyAuth`, async). An `ApiKey` belongs to one product;
+  only its SHA-256 is stored; the raw key is shown once when an admin makes it (Admin > API keys, `core:api-keys`).
+- Endpoints: `/health` (no key), `/product`, `/customers/{external_ref}/status` (the "may they use it?" check),
+  `/subscriptions`, `/invoices` (no drafts), `/invoices/{id}/pdf`, `/receipts`, `/receipts/{id}/pdf`. Lists take
+  `limit`/`offset` and `updated_since`.
+- Settings: `API_RATE_LIMIT` (per key, default 120/m, counted in the cache: set `CACHE_URL` to Redis with several
+  workers), `API_DOCS_ENABLED` (docs at `/api/v1/docs`, admins only), `NINJA_*` pagination, `NINJA_NUM_PROXIES`.
+- Tests: `apps/api/tests.py`.
 
 ### PDFs
 `apps/documents/pdf.py` (the Dakdot look on fpdf2, DM Sans in `documents/fonts/dmsans/`) + `layouts.py` (invoice /

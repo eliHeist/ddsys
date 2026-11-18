@@ -11,13 +11,14 @@
     <title>{{ title }} - {{ BRAND }}</title>
     <link rel="stylesheet" href="{% static 'index.css' %}">
     <link rel="icon" href="{% static 'favicon.svg' %}">
-    {# sets the dark class before first paint; same "theme" key as <c-ui.mode_toggle> in the header #}
-    <c-ui.mode_toggle.head />
+    {# sets the dark class before first paint: system / auto (7pm-7am) / light / dark, chosen in <c-theme.menu> #}
+    <c-theme.head />
 	{% include "core/_scripts.html" %}
     <script defer src="{% static 'django_cotton_ui/cotton-ui.min.js' %}"></script>
     <script src="{% static 'index.js' %}" defer></script>
 </head>
-<body class="bg-bg text-fg antialiased" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+{# x-data: Alpine only reads @click and friends inside an x-data scope; this makes the whole page one #}
+<body x-data class="text-fg antialiased" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
 		hx-boost="true">
     {# every toast in the app: HX-Trigger {"toast": {"message", "variant"}} (apps.core.http.toast) or $dispatch('toast', {...}) #}
     <c-ui.toast.container position="bottom-right" />

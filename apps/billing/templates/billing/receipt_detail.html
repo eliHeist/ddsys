@@ -2,40 +2,49 @@
 {% load ui %}
 {% block title %}{{ receipt.number }}{% endblock %}
 {% block content %}
-<c-page-header title="{{ receipt.number }}" back_url="{% url 'billing:invoice' receipt.invoice_id %}" back_label="{{ receipt.invoice.number }}">
+{% if receipt.invoice_id %}{% url 'billing:invoice' receipt.invoice_id as back_url %}{% else %}{% url 'clients:detail' receipt.client_id as back_url %}{% endif %}
+<c-page-header title="{{ receipt.number }}" back_url="{{ back_url }}" back_label="{% firstof receipt.invoice.number receipt.client.name %}">
   <c-slot name="meta">
     <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
       <c-status status="{% if receipt.status == 'void' %}void{% else %}paid{% endif %}" label="{{ receipt.get_status_display }}" />
+      {% if receipt.is_deposit %}<c-ui.badge color="ink">Deposit</c-ui.badge>{% endif %}
       <span>{{ receipt.received_from }}</span>
     </div>
   </c-slot>
-  <c-ui.button href="{% url 'documents:pdf' 'receipt' receipt.pk %}" target="_blank" hx-boost="false">{% icon "download" %} PDF</c-ui.button>
+  <c-ui.button href="{% url 'documents:pdf' 'receipt' receipt.pk %}" hx-boost="false" download>{% icon "download" %} PDF</c-ui.button>
+  {% if apply_dialog and can.money %}
+    <c-ui.button variant="primary" @click='$dispatch("open-dialog", {{ apply_dialog|jsattr }})'>{% icon "repeat" %} Apply to an invoice</c-ui.button>
+  {% endif %}
   {% if can.money and receipt.status == "valid" %}
     <c-ui.button variant="danger" :outlined="True" @click='$dispatch("open-dialog", {{ void_dialog|jsattr }})'>Void</c-ui.button>
   {% endif %}
 </c-page-header>
 <div id="form-errors" class="mb-3 text-sm empty:hidden" role="alert"></div>
 <div class="grid gap-4 lg:grid-cols-2">
-  <c-section title="Payment" :padded="True">
-    <dl class="grid gap-2 text-sm">
-      <div class="flex justify-between gap-3"><dt class="text-muted">Amount received</dt><dd class="text-lg font-semibold tabular-nums">{{ receipt.amount|money }}</dd></div>
-      <div class="flex justify-between gap-3"><dt class="text-muted">In words</dt><dd class="text-right">{{ receipt.amount_in_words }}</dd></div>
-      <div class="flex justify-between gap-3"><dt class="text-muted">Date</dt><dd>{{ receipt.date|date:"d/m/Y" }}</dd></div>
-      <div class="flex justify-between gap-3"><dt class="text-muted">Into</dt><dd><a class="underline" href="{% url 'finance:account' receipt.account_id %}">{{ receipt.account }}</a></dd></div>
-      <div class="flex justify-between gap-3"><dt class="text-muted">Transaction ID</dt><dd>{{ receipt.reference|default:"-" }}</dd></div>
-      <div class="flex justify-between gap-3"><dt class="text-muted">Recorded by</dt><dd>{% firstof receipt.received_by.get_full_name receipt.received_by.email "-" %}</dd></div>
-      <div class="grid gap-1"><dt class="text-muted">Being payment for</dt><dd>{{ receipt.being_payment_for }}</dd></div>
-      {% if receipt.status == "void" %}<div class="grid gap-1 rounded-control bg-red-50 p-2 text-red-800 dark:bg-red-950/30 dark:text-red-200"><dt class="font-medium">Voided {{ receipt.voided_at|date:"j M Y" }}</dt><dd>{{ receipt.void_reason }}</dd></div>{% endif %}
-    </dl>
-  </c-section>
-  <c-section title="Against {{ receipt.invoice.number }}" :padded="True">
-    <dl class="grid gap-2 text-sm">
-      <div class="flex justify-between"><dt class="text-muted">Invoice total</dt><dd class="tabular-nums">{{ receipt.invoice_total|number }}</dd></div>
-      <div class="flex justify-between"><dt class="text-muted">Previously paid</dt><dd class="tabular-nums">{{ receipt.previously_paid|number }}</dd></div>
-      <div class="flex justify-between"><dt class="text-muted">This payment</dt><dd class="tabular-nums">{{ receipt.amount|number }}</dd></div>
-      <div class="flex justify-between border-t border-box-border pt-2 font-semibold"><dt>Balance due</dt><dd class="tabular-nums">{{ receipt.balance_due|number }}</dd></div>
-    </dl>
-    <p class="mt-3 text-xs text-muted">As it stood when this payment was recorded.</p>
-  </c-section>
+  {% include "billing/partials/_receipt_payment.html" %}
+  <div class="grid content-start gap-4">
+    {% if receipt.invoice_id %}
+      <c-section title="Against {{ receipt.invoice.number }}" :padded="True">
+        <dl class="grid gap-2 text-sm">
+          <div class="flex justify-between"><dt class="text-muted">Invoice total</dt><dd class="tabular-nums">{{ receipt.invoice_total|number }}</dd></div>
+          <div class="flex justify-between"><dt class="text-muted">Previously paid</dt><dd class="tabular-nums">{{ receipt.previously_paid|number }}</dd></div>
+          <div class="flex justify-between"><dt class="text-muted">This payment</dt><dd class="tabular-nums">{{ receipt.amount|number }}</dd></div>
+          <div class="flex justify-between border-t border-box-border pt-2 font-semibold"><dt>Balance due</dt><dd class="tabular-nums">{{ receipt.balance_due|number }}</dd></div>
+          {% if receipt.kept_as_credit %}<div class="flex justify-between text-accent"><dt>Kept as credit</dt><dd class="tabular-nums">{{ receipt.kept_as_credit|number }}</dd></div>{% endif %}
+        </dl>
+        <p class="mt-3 text-xs text-muted">As it stood when this payment was recorded.{% if receipt.fee %} The client is credited the full amount; the fee is Dakdot's cost and is not on the printed receipt.{% endif %}</p>
+      </c-section>
+    {% else %}
+      <c-section title="Deposit" :padded="True">
+        <dl class="grid gap-2 text-sm">
+          <div class="flex justify-between gap-3"><dt class="text-muted">From</dt><dd><a class="link" href="{% url 'clients:detail' receipt.client_id %}">{{ receipt.client }}</a></dd></div>
+          {% if receipt.quotation_id %}<div class="flex justify-between gap-3"><dt class="text-muted">On quotation</dt><dd><a class="link" href="{% url 'billing:quotation' receipt.quotation_id %}">{{ receipt.quotation.label }}</a></dd></div>{% endif %}
+          {% if receipt.project_id %}<div class="flex justify-between gap-3"><dt class="text-muted">For project</dt><dd><a class="link" href="{% url 'projects:detail' receipt.project_id %}">{{ receipt.project.title }}</a></dd></div>{% endif %}
+        </dl>
+        <p class="mt-3 text-xs text-muted">Money paid before its invoice.{% if receipt.quotation_id or receipt.project_id %} It is applied automatically when an invoice for this {% if receipt.quotation_id %}quotation{% else %}project{% endif %} is issued.{% else %} Apply it to an invoice when there is one.{% endif %}</p>
+      </c-section>
+    {% endif %}
+    {% include "billing/partials/_receipt_applied.html" %}
+  </div>
 </div>
 {% endblock %}

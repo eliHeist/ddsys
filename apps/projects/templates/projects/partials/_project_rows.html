@@ -2,12 +2,12 @@
 <div id="project-rows">
   {% if page_obj.object_list %}
     <c-ui.table>
-      <thead><tr><th>Project</th><th>Client</th><th>Lead</th><th>Due</th><th>Status</th></tr></thead>
+      <thead><tr><th>{% if products %}Product{% else %}Project{% endif %}</th><th>{% if products %}Code{% else %}For{% endif %}</th><th>Lead</th><th>Due</th><th>Status</th></tr></thead>
       <tbody>
         {% for p in page_obj %}
           <tr>
-            <td><a class="font-medium underline" href="{% url 'projects:detail' p.pk %}">{{ p.title }}</a></td>
-            <td>{{ p.client }}</td>
+            <td><a class="link" href="{% url 'projects:detail' p.pk %}">{{ p.title }}</a></td>
+            <td>{% if products %}<code class="text-xs">{{ p.code }}</code>{% elif p.client %}{{ p.client }}{% else %}<span class="text-muted">Dakdot · internal</span>{% endif %}</td>
             <td>{% firstof p.lead.get_full_name p.lead.email "-" %}</td>
             <td>{{ p.due_date|date:"d/m/Y"|default:"-" }}</td>
             <td><c-status status="{{ p.status }}" label="{{ p.get_status_display }}" size="sm" /></td>
@@ -17,7 +17,6 @@
     </c-ui.table>
     {% include "core/_ui.html#pager" %}
   {% else %}
-    {% url 'projects:new' as new_url %}
-    {% include "core/_ui.html#empty" with message="No projects here." url=new_url action="New project" %}
+    {% include "core/_ui.html#empty" with message="Nothing here yet." %}
   {% endif %}
 </div>

@@ -3,9 +3,11 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from apps.billing import selectors
-from apps.billing.forms import void_dialog
+from apps.billing.forms import deposit_dialog, void_dialog
 from apps.billing.models import Quotation
 from apps.billing.services import quotations
+from apps.core.permissions import MONEY
+from apps.finance.models import Account
 from apps.core.http import arender, hx_redirect, redirect_with_message, paginate, service_errors, staff_required, wants_partial
 
 from .editor import editor_page
@@ -22,10 +24,16 @@ async def quotation_list(request):
 @staff_required()
 async def quotation_detail(request, pk):
     quotation = await selectors.quotation_detail(pk)
-    return await arender(request, "billing/quotation_detail.html", {
+    context = {
         "doc": quotation, "invoice": quotation.invoice,
+        "deposits": [r async for r in selectors.with_credit(quotation.deposits.order_by("date", "id"))],
         "void_dialog": void_dialog(f"Void {quotation.label}", reverse("billing:quotation-void", args=[pk]), "The quotation"),
-    })
+    }
+    can_take_deposit = quotation.status in (Quotation.Status.ISSUED, Quotation.Status.ACCEPTED)
+    if can_take_deposit and (request.actor.is_superuser or request.staff.role in MONEY):
+        accounts = [a async for a in Account.objects.filter(is_active=True)]
+        context["deposit_dialog"] = deposit_dialog(quotation.client, accounts, quotations=[quotation], quotation=quotation)
+    return await arender(request, "billing/quotation_detail.html", context)
 
 
 @staff_required()

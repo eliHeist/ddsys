@@ -1,0 +1,24 @@
+{% load ui %}
+<div id="subscription-rows">
+  {% if page_obj %}{# a Page from the list view, or a plain list from a product's page #}
+    <c-ui.table>
+      <thead><tr><th>Subscription</th><th>Client</th><th>Bills</th><th>Next invoice</th><th>Paid through</th><th>Status</th><th class="text-right">Amount</th></tr></thead>
+      <tbody>
+        {% for s in page_obj %}
+          <tr>
+            <td><a class="link" href="{% url 'billing:subscription' s.pk %}">{{ s.title }}</a>{% if s.project %}<span class="block text-xs text-muted">{{ s.project.title }}</span>{% endif %}</td>
+            <td>{{ s.client }}</td>
+            <td>{{ s.get_interval_months_display }}</td>
+            <td>{% if s.status == "active" %}{{ s.next_invoice_date|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+            <td>{{ s.paid_through|date:"d/m/Y"|default:"-" }}</td>
+            <td><c-status status="{{ s.status }}" label="{{ s.get_status_display }}" size="sm" /></td>
+            <td class="text-right tabular-nums">{{ s.amount|number }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </c-ui.table>
+    {% include "core/_ui.html#pager" %}
+  {% else %}
+    {% include "core/_ui.html#empty" with message="No subscriptions here." %}
+  {% endif %}
+</div>

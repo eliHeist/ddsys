@@ -1,0 +1,12 @@
+{% load ui %}
+{# one row of <c-theme.menu>; x-on:click because the kit item already uses @click to close the menu #}
+<c-ui.dropdown.item x-on:click="window.theme.set('{{ value }}')" ::aria-checked="mode === '{{ value }}'" role="menuitemradio">
+    <span class="flex items-center gap-3">
+        <span class="text-ink-400">{% icon icon_name %}</span>
+        <span class="grid flex-1 leading-tight">
+            <span class="font-medium text-fg">{{ label }}</span>
+            <span class="text-xs text-muted">{{ hint }}</span>
+        </span>
+        <span x-show="mode === '{{ value }}'" x-cloak class="text-accent">{% icon "check" %}</span>
+    </span>
+</c-ui.dropdown.item>

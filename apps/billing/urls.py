@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import invoices, quotations, receipts
+from .views import invoices, quotations, receipts, subscriptions
 
 app_name = "billing"
 
@@ -24,8 +24,21 @@ urlpatterns = [
     path("invoices/<int:pk>/void/", invoices.invoice_void, name="invoice-void"),
     path("invoices/<int:pk>/delete/", invoices.invoice_delete, name="invoice-delete"),
     path("invoices/<int:pk>/pay/", invoices.invoice_pay, name="invoice-pay"),
+    path("invoices/<int:pk>/apply-credit/", invoices.invoice_apply_credit, name="invoice-apply-credit"),
+
+    path("subscriptions/", subscriptions.subscription_list, name="subscriptions"),
+    path("subscriptions/new/", subscriptions.subscription_create, name="subscription-new"),
+    path("subscriptions/<int:pk>/", subscriptions.subscription_detail, name="subscription"),
+    path("subscriptions/<int:pk>/edit/", subscriptions.subscription_edit, name="subscription-edit"),
+    path("subscriptions/<int:pk>/invoice-now/", subscriptions.subscription_invoice_now, name="subscription-invoice-now"),
+    path("subscriptions/<int:pk>/pause/", subscriptions.subscription_status, {"status": "paused"}, name="subscription-pause"),
+    path("subscriptions/<int:pk>/resume/", subscriptions.subscription_status, {"status": "active"}, name="subscription-resume"),
+    path("subscriptions/<int:pk>/end/", subscriptions.subscription_status, {"status": "ended"}, name="subscription-end"),
 
     path("receipts/", receipts.receipt_list, name="receipts"),
     path("receipts/<int:pk>/", receipts.receipt_detail, name="receipt"),
     path("receipts/<int:pk>/void/", receipts.receipt_void, name="receipt-void"),
+    path("receipts/<int:pk>/apply/", receipts.receipt_apply, name="receipt-apply"),
+    path("deposits/new/<int:client_pk>/", receipts.deposit_new, name="deposit-new"),
+    path("allocations/<int:pk>/remove/", receipts.allocation_remove, name="allocation-remove"),
 ]

@@ -4,8 +4,8 @@
 {% partialdef stat %}
   <c-ui.card padding="sm">
     <dl>
-      <dt class="text-xs font-medium text-muted">{{ label }}</dt>
-      <dd class="mt-1 text-2xl font-semibold tabular-nums text-ink-900 dark:text-ink-100 {% if tone %}{{ tone }}{% endif %}">{{ value }}</dd>
+      <dt class="text-[13px] font-medium text-muted">{{ label }}</dt>
+      <dd class="mt-1.5 text-[26px] leading-none font-semibold tracking-tight tabular-nums text-ink-900 dark:text-ink-50 {% if tone %}{{ tone }}{% endif %}">{{ value }}</dd>
     </dl>
     {% if hint %}<p class="mt-1 text-xs text-muted">{{ hint }}</p>{% endif %}
   </c-ui.card>

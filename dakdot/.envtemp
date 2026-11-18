@@ -8,6 +8,10 @@ INTERNAL_IPS=127.0.0.1
 # SQLite locally; for PostgreSQL: postgres://user:password@localhost:5432/dakdot
 DATABASE_URL=sqlite:///db.sqlite3
 
+# Encrypts project secrets. Required when DEBUG=False; make one with: uv run manage.py secrets_key
+# Keep a copy somewhere safe: without it saved secrets can't be read.
+SECRETS_KEY=
+
 BRAND_NAME=Dakdot
 MFA_WEBAUTHN_RP_ID=localhost
 
@@ -19,3 +23,14 @@ EMAIL_USE_TLS=True
 EMAIL_HOST_USER=
 EMAIL_HOST_PASSWORD=
 DEFAULT_FROM_EMAIL=Dakdot Creations <connect@dakdot.com>
+# Production: EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend (invites and password resets are emails)
+# Who is emailed when a page crashes (production only), comma separated
+ADMINS=
+
+# API for our products' apps (/api/v1/)
+API_RATE_LIMIT=120/m
+API_DOCS_ENABLED=True
+NINJA_NUM_PROXIES=0
+# Cache (API rate limit, sign-in lockouts). Leave unset: memory locally, a database table in production,
+# shared by all workers. Only set it to change that, e.g. CACHE_URL=redis://localhost:6379/1 one day.
+# CACHE_URL=

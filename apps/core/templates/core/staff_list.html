@@ -8,12 +8,17 @@
 <c-section>
   <ul class="divide-y divide-box-border">
     {% for p in people %}
-      <li class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+      <li class="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
         <div>
           <a href="{% url 'core:staff-edit' p.pk %}" class="font-medium hover:underline">{% firstof p.user.get_full_name p.user.email %}</a>
           <p class="text-sm text-muted">{{ p.user.email }}{% if p.title %} · {{ p.title }}{% endif %}</p>
         </div>
         <div class="flex items-center gap-2">
+          {% if not p.user.has_usable_password %}<span class="text-xs text-muted">No password yet</span>{% endif %}
+          {% if p.is_active %}
+            <c-ui.button size="sm" variant="ghost" hx-post="{% url 'core:staff-invite' p.pk %}" hx-confirm="Email {{ p.user.email }} a new link to choose a password?">{% icon "send" %} Send sign-in link</c-ui.button>
+          {% endif %}
+          {% if p.is_director %}<c-ui.badge color="ink">Director</c-ui.badge>{% endif %}
           <c-status status="{% if p.is_active %}ok{% else %}void{% endif %}" label="{% if p.is_active %}Active{% else %}Inactive{% endif %}" />
           <c-ui.badge color="ink">{{ p.get_role_display }}</c-ui.badge>
         </div>

@@ -1,0 +1,22 @@
+{% load ui %}
+{# Where a receipt's money went: the invoices it paid, and what is left as the client's credit. #}
+<c-section title="Paid towards" count="{{ receipt.allocations.all|length }}">
+  {% if receipt.allocations.all %}
+    <ul class="divide-y divide-box-border">
+      {% for a in receipt.allocations.all %}
+        <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+          <div><a class="link" href="{% url 'billing:invoice' a.invoice_id %}">{{ a.invoice.number }}</a><span class="block text-xs text-muted">{% if a.is_from_deposit %}Applied {{ a.date|date:"d/m/Y" }}{% else %}Paid on the invoice{% endif %}</span></div>
+          <span class="tabular-nums">{{ a.amount|number }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="px-5 py-4 text-sm text-muted">Not used on an invoice yet.</p>
+  {% endif %}
+  {% if receipt.status == "valid" %}
+    <div class="flex items-center justify-between gap-3 border-t border-box-border px-5 py-3 text-sm font-semibold">
+      <span>Credit left</span><span class="tabular-nums {% if receipt.credit %}text-accent{% endif %}">{{ receipt.credit|money:receipt.currency }}</span>
+    </div>
+    {% if receipt.credit and not open_invoices %}<p class="px-5 pb-4 text-xs text-muted">{{ receipt.client }} has no open invoice to use it on yet.</p>{% endif %}
+  {% endif %}
+</c-section>

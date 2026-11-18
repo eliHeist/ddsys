@@ -7,8 +7,11 @@ from apps.core.models import TimeStampedModel
 class Transaction(TimeStampedModel):
     """One movement of money into or out of an account: the record every balance is worked out from.
 
-    Transactions are made by services only (a receipt, an expense, a transfer or an adjustment), never typed
-    in by hand, and never deleted: voiding the receipt or expense voids its transaction too.
+    Transactions are made by services only (a receipt, an expense, a transfer, a loan or its repayment, an
+    adjustment), never typed
+    in by hand, and never deleted: voiding the receipt or expense voids its transactions too.
+    A charge on the way (mobile money or bank fee) is its own FEE transaction, linked to the same receipt,
+    expense or transfer, so the main amount stays as agreed and fees can be totalled.
     """
 
     class Direction(models.TextChoices):
@@ -19,9 +22,11 @@ class Transaction(TimeStampedModel):
         RECEIPT = "receipt", "Client payment"
         EXPENSE = "expense", "Expense"
         TRANSFER = "transfer", "Transfer"
-        FEE = "fee", "Transfer fee"
+        FEE = "fee", "Fee"
         ADJUSTMENT = "adjustment", "Adjustment"
         OTHER_INCOME = "other_income", "Other income"
+        LOAN = "loan", "Loan received"
+        LOAN_REPAYMENT = "loan_repayment", "Loan repayment"
 
     account = models.ForeignKey("finance.Account", on_delete=models.PROTECT, related_name="transactions")
     direction = models.CharField(max_length=3, choices=Direction.choices)
@@ -33,6 +38,11 @@ class Transaction(TimeStampedModel):
     receipt = models.ForeignKey("billing.Receipt", null=True, blank=True, on_delete=models.PROTECT, related_name="transactions")
     expense = models.ForeignKey("finance.Expense", null=True, blank=True, on_delete=models.PROTECT, related_name="transactions")
     transfer = models.ForeignKey("finance.Transfer", null=True, blank=True, on_delete=models.PROTECT, related_name="transactions")
+    loan = models.ForeignKey("finance.Loan", null=True, blank=True, on_delete=models.PROTECT, related_name="transactions")
+    loan_repayment = models.ForeignKey("finance.LoanRepayment", null=True, blank=True, on_delete=models.PROTECT,
+                                       related_name="transactions")
+    project = models.ForeignKey("projects.Project", null=True, blank=True, on_delete=models.PROTECT, related_name="other_income",
+                                help_text="Other income only: the product or project it was earned on")
     is_void = models.BooleanField(default=False)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
 
